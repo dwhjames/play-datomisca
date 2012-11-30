@@ -1,0 +1,21 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET    /communities/count                            controllers.Application.countCommunities
+GET    /communities/first                            controllers.Application.getFirstEntity
+GET    /communities/names                            controllers.Application.getCommunityNames
+GET    /communities/neighborhoods                    controllers.Application.getCommunityNeighborHoods
+GET    /communities/neighborhoodCommunities          controllers.Application.getNeighborHoodCommunities
+GET    /communities/uniquenames                      controllers.Application.findAllCommunityNames
+GET    /communities/belltown                         controllers.Application.findCategoriesForBelltown
+GET    /communities/twitter                          controllers.Application.findTwitterCommunities
+GET    /communities/ne                               controllers.Application.findNECommunities
+GET    /communities/commsregions                     controllers.Application.findCommunitiesRegions
+GET    /communities/twitterfacebook                  controllers.Application.findTwitterFacebook
+GET    /communities/twitterfacebooklist              controllers.Application.findTwitterFacebookList
+
+GET    /communities/namesurls                        controllers.Application.findAllCommunityNamesAndUrls
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
