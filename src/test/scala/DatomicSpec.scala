@@ -23,8 +23,8 @@ class DatomicSpec extends Specification {
       Utils.running(FakeApplicationWithConf(
         additionalConfiguration = 
           com.typesafe.config.ConfigFactory.parseMap(Map(
-            "datomic.uri.mem" -> "datomic:mem://mem",
-            "datomic.uri.mem2" -> "datomic:mem://mem2"
+            "datomiska.uri.mem" -> "datomic:mem://mem",
+            "datomiska.uri.mem2" -> "datomic:mem://mem2"
           ).asJava),
         additionalPlugins = Seq("play.modules.datomic.DatomicPlugin")
       )){

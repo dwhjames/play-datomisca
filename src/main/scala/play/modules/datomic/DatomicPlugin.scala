@@ -93,7 +93,7 @@ object DatomicPlugin {
 
   private def parseConf(app: Application): Map[String, String] = {
     import scala.collection.JavaConversions._
-    app.configuration.getObject("datomic.uri") match {
+    app.configuration.getObject("datomiska.uri") match {
       case Some(obj) => obj.toMap.map{ case(k, v) => k -> v.unwrapped.toString }
       case None =>  throw app.configuration.globalError("Missing configuration key 'datomic.uri' (should be a list of servers)!")
     }
