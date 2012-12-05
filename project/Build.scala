@@ -4,14 +4,12 @@ import Keys._
 object BuildSettings {
   val buildOrganization = "play.modules.datomic"
   val buildVersion      = "0.1-SNAPSHOT"
-  val buildScalaVersion = "2.10.0-RC2"
 
   val playVersion  = "2.1-RC1"
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := buildOrganization,
-    version      := buildVersion,
-    scalaVersion := buildScalaVersion
+    version      := buildVersion
   )
 }
 

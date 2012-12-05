@@ -15,7 +15,19 @@ GET    /communities/ne                               controllers.Application.fin
 GET    /communities/commsregions                     controllers.Application.findCommunitiesRegions
 GET    /communities/twitterfacebook                  controllers.Application.findTwitterFacebook
 GET    /communities/twitterfacebooklist              controllers.Application.findTwitterFacebookList
+GET    /communities/nocommorcomm                     controllers.Application.findNonCommercialEmaillistOrCommercialWebSites
+GET    /communities/commafterc                       controllers.Application.findAllCommNamesAfterCInAlphaOrder
+GET    /communities/wallingford                      controllers.Application.findAllCommWallingford
+GET    /communities/food                             controllers.Application.findAllCommWebsitesFood
+GET    /communities/twitterrule                      controllers.Application.findAllCommNamesTwitter
+GET    /communities/nesw                             controllers.Application.findAllCommNamesNESW
+GET    /communities/neswor                           controllers.Application.findAllCommNamesNESWOr
+GET    /communities/dbtx                             controllers.Application.findAllDBTx
+GET    /makeNewPartition                             controllers.Application.makeNewPartition
+GET    /makeNewComm                                  controllers.Application.makeNewComm
+GET    /updateComm                                   controllers.Application.updateComm
+GET    /retractComm                                  controllers.Application.retractComm
+GET    /transReport                                  controllers.Application.transReport
 
-GET    /communities/namesurls                        controllers.Application.findAllCommunityNamesAndUrls
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
