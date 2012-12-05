@@ -15,7 +15,8 @@ object ApplicationBuild extends Build {
     val main = play.Project(appName, appVersion, appDependencies).settings(
       resolvers ++= Seq(
         Resolver.file("local repository", file("/Users/pvo/.ivy2/local"))(Resolver.ivyStylePatterns),
-        "clojars" at "https://clojars.org/repo"
+        "clojars" at "https://clojars.org/repo",
+        "Couchbase" at "http://files.couchbase.com/maven2/"
       )
     )
 
