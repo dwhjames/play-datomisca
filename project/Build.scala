@@ -31,6 +31,7 @@ object ApplicationBuild extends Build {
       libraryDependencies ++= Seq(
         "play" %% "play" % BuildSettings.playVersion,
         "pellucid" %% "datomic" % "0.1-SNAPSHOT",
+        "com.datomic" % "datomic-free" % "0.8.3627" % "provided" exclude("org.slf4j", "slf4j-nop"),
         /*"org.clojure" % "clojure" % "1.4.0",
         "org.clojure" % "data.json" % "0.1.2",
         "net.java.dev.jets3t" % "jets3t" % "0.8.1",
