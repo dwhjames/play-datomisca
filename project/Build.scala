@@ -4,19 +4,22 @@ import Keys._
 object BuildSettings {
   val buildOrganization = "play.modules.datomic"
   val buildVersion      = "0.1-SNAPSHOT"
+  val buildScalaVersion      = "2.10.0-RC1"
 
   val playVersion  = "2.1-RC1"
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := buildOrganization,
-    version      := buildVersion
+    version      := buildVersion,
+    scalaVersion := buildScalaVersion
   )
 }
 
 object ApplicationBuild extends Build {
   val typesafeRepo = Seq(
     "Typesafe repository snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
-    "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/"
+    "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/",
+    Resolver.file("local repository", file("/Volumes/PVO/work/play-2.1-RC1/repository/local"))(Resolver.ivyStylePatterns)
   )
 
   //lazy val datomicDriver = RootProject(uri("https://github.com/pellucidanalytics/datomic.git#master"))
