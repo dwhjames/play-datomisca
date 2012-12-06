@@ -493,7 +493,7 @@ object Application extends Controller {
   }
 
   def makeNewPartition = Action {
-    val newPartition = Datomic.addEntity(DId(Partition.DB))(
+    val newPartition = Datomic.addToEntity(DId(Partition.DB))(
       Namespace.DB / "ident" -> ":communities",
       Namespace.DB.INSTALL / "_partition" -> "db.part/db"
     )
@@ -506,7 +506,7 @@ object Application extends Controller {
   }
 
   def makeNewComm = Action {
-    val newComm = Datomic.addEntity(DId(Partition(Keyword("communities"))))(
+    val newComm = Datomic.addToEntity(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
 
@@ -550,7 +550,7 @@ object Application extends Controller {
   }  
   
   def transReport = Action {
-    val newComm = Datomic.addEntity(DId(Partition(Keyword("communities"))))(
+    val newComm = Datomic.addToEntity(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
 

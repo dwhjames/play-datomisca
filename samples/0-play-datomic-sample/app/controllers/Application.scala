@@ -28,21 +28,20 @@ object Application extends Controller {
     implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
     
     val fut = Datomic.transact(
-      Datomic.addEntity(DId(Partition.USER))(
+      Datomic.addToEntity(DId(Partition.USER))(
         person / "name" -> "toto",
         person / "age" -> 30
       ),
-      Datomic.addEntity(DId(Partition.USER))(
+      Datomic.addToEntity(DId(Partition.USER))(
         person / "name" -> "tutu",
         person / "age" -> 54
       ),
-      Datomic.addEntity(DId(Partition.USER))(
+      Datomic.addToEntity(DId(Partition.USER))(
         person / "name" -> "tata",
         person / "age" -> 23
       )
     ).map{ tx => 
-      //println("Inserted data... tx:"+tx)
-      Datomic.query[Args2, Args3]("""
+      val q = Datomic.typedQuery[Args2, Args3]("""
       [ 
         :find ?e ?name ?a
         :in $ ?age
@@ -50,18 +49,12 @@ object Application extends Controller {
                [ ?e :person/age ?a ]
                [ (< ?a ?age) ]
       ]
-      """).all().execute(database, DLong(45L))
-        .recover{ 
-          case e => Future.failed(e) 
-        }
+      """)
+
+      Datomic.query(q, database, DLong(45L))
     }
     Async {
-      fut.map { tryres =>
-        tryres match {
-          case Success(t) => Ok(t.toString)
-          case Failure(e) => BadRequest(e.getMessage)     
-        }
-      }
+      fut.map { l => Ok(l.toString) }
     }
     
 
