@@ -47,7 +47,7 @@ object Dog {
 
     Datomic.transact(toEntity(tempid)(dog)).flatMap{ tx =>
       tx.resolve(tempid)
-        .map{ dl => Future.successful(dl.value) }
+        .map{ realid => Future.successful(realid.as[Long]) }
         .getOrElse(Future.failed(new RuntimeException("failed to resolve tempid")))
     }
   }
@@ -158,7 +158,7 @@ object Person {
 
     Datomic.transact(toEntity(tempid)(person)).flatMap{ tx =>
       tx.resolve(tempid)
-        .map{ dl => Future.successful(dl.value) }
+        .map{ realid => Future.successful(realid.as[Long]) }
         .getOrElse(Future.failed(new RuntimeException("failed to resolve tempid")))
     }
   }

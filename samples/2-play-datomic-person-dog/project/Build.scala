@@ -5,7 +5,7 @@ import play.Project._
 
 object ApplicationBuild extends Build {
 
-    val appName         = "play-datomic-sample"
+    val appName         = "play-datomic-person-dog"
     val appVersion      = "1.0-SNAPSHOT"
 
     val appDependencies = Seq(
