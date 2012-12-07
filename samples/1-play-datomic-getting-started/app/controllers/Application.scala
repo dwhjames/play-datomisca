@@ -45,7 +45,7 @@ object Application extends Controller {
       [:find ?c :where [?c :community/name]]
     """)
 
-    Datomic.query(q).headOption.map{ 
+    Datomic.query(q).headOption.collect{ 
       case eid: DLong => 
         database.entity(eid.as[DLong]).map{ e =>
           Ok(Json.toJson(e.toMap.map{ case(k, v) => k.toString -> v.toString }))
@@ -94,23 +94,25 @@ object Application extends Controller {
     val q = Datomic.typedQuery[Args0, Args1]("""
       [:find ?c :where [?c :community/name]]
     """)
-
-    Datomic.query(q).headOption.flatMap{ case eid: DLong =>
-      database.entity(eid).map{ entity =>
-        entity.tryGetAs[DEntity](community / "neighborhood").flatMap { neighborhood => 
-          neighborhood.tryGetAs[DSet](community / "_neighborhood").flatMap { communities =>
-            val l = communities.toSet.map { case comm: DEntity =>
-              comm.tryGetAs[DString](community / "name").map(_.as[String])
-            }
-            Utils.sequence(l)
-          }
-        }.map{ l =>
-          Ok(Json.toJson(l))
-        }.get
-      }
-    }.getOrElse(BadRequest("no community found"))
     
+    Datomic.query(q).headOption.collect{ 
+      case eid: DLong =>
+        val communities = for{ 
+          entity <- database.entity(eid)
+          neighborhood <- entity.getAs[DEntity](community / "neighborhood")
+          communities <- neighborhood.getAs[Set[DEntity]](community / "_neighborhood")
+        } yield(communities)
+        
+        communities.map{ communities =>
+          val names = for {
+            comm <- communities
+            name <- comm.getAs[String](community / "name")
+          } yield(name)
 
+          Ok(Json.toJson(names))
+        }.getOrElse(BadRequest("entity not resolved"))
+
+    }.getOrElse(BadRequest("no community found"))
     
   }
 
