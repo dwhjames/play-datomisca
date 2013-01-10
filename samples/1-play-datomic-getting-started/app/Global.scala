@@ -30,14 +30,13 @@ object Global extends GlobalSettings {
         play.Logger.info("bootstrapped schema")
 
         val dataIs = current.resourceAsStream("seattle-data0.dtm").get
-        
+              
         val dataContent = Source.fromInputStream(dataIs).mkString
         val data = Datomic.parseOps(dataContent)
 
-        data.map { data =>
+        data.map{ data =>
           Datomic.transact(data).map{ tx =>
             play.Logger.info("bootstrapped data with %d entities".format(tx.tempids.size))
-
           }
         }.get
       }

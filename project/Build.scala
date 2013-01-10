@@ -4,9 +4,11 @@ import Keys._
 object BuildSettings {
   val buildOrganization = "play.modules.datomic"
   val buildVersion      = "0.1-SNAPSHOT"
-  val buildScalaVersion      = "2.10.0-RC1"
+  val buildScalaVersion = "2.10.0"
 
-  val playVersion  = "2.1-RC1"
+  val datomicVersion    = "0.8.3731"
+
+  val playVersion  = "2.1-RC2"
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := buildOrganization,
@@ -31,7 +33,7 @@ object ApplicationBuild extends Build {
       libraryDependencies ++= Seq(
         "play" %% "play" % BuildSettings.playVersion,
         "pellucid" %% "datomic" % "0.1-SNAPSHOT",
-        "com.datomic" % "datomic-free" % "0.8.3627" % "provided" exclude("org.slf4j", "slf4j-nop"),
+        "com.datomic" % "datomic-free" % BuildSettings.datomicVersion % "provided" exclude("org.slf4j", "slf4j-nop"),
         /*"org.clojure" % "clojure" % "1.4.0",
         "org.clojure" % "data.json" % "0.1.2",
         "net.java.dev.jets3t" % "jets3t" % "0.8.1",

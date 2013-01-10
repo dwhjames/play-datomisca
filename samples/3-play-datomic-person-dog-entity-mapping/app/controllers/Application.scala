@@ -71,7 +71,7 @@ object Application extends Controller {
             }
           case _ => BadRequest(Json.obj("result" -> "KO", "errors" -> s"dog $dogName not found"))
         }
-    }.recover{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
   }
 
   def getPerson(id: Long) = Action {
@@ -109,6 +109,6 @@ object Application extends Controller {
             }
           case _ => BadRequest(Json.obj("result" -> "KO", "errors" -> s"person with $id or dog $dogName not found"))
         }
-    }.recover{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
   }
 }

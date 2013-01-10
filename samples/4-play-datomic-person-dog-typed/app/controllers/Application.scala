@@ -15,9 +15,9 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.json.Writes._
 
-import reactivedatomic.Datomic._ 
 import reactivedatomic._
-import reactivedatomic.EntityImplicits._ 
+import Datomic._ 
+import DatomicMapping._ 
 
 import play.modules.datomic._
 import play.modules.datomic.Implicits._
@@ -80,7 +80,7 @@ object Application extends Controller {
           )
         }
       }
-    }.recover{ e =>
+    }.recoverTotal{ e =>
       BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> JsError.toFlatJson(e))))
     }
   }
@@ -128,6 +128,6 @@ object Application extends Controller {
           Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
         }
       }
-    }.recover{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
   }
 }

@@ -10,11 +10,9 @@ import java.util.concurrent.TimeUnit._
 import scala.concurrent.duration.Duration
 import scala.util.{Try, Success, Failure}
 
-import reactivedatomic.Datomic._ 
 import reactivedatomic._
+import Datomic._
 import play.modules.datomic._
-
-
 
 object Application extends Controller {
   def index = Action { 
@@ -41,7 +39,7 @@ object Application extends Controller {
         person / "age" -> 23
       )
     ).map{ tx => 
-      val q = Datomic.typedQuery[Args2, Args3]("""
+      val query = Datomic.typed.query[Args2, Args3]("""
       [ 
         :find ?e ?name ?a
         :in $ ?age
@@ -51,7 +49,7 @@ object Application extends Controller {
       ]
       """)
 
-      Datomic.query(q, database, DLong(45L))
+      Datomic.q(query, database, DLong(45L))
     }
     Async {
       fut.map { l => Ok(l.toString) }

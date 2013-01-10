@@ -13,8 +13,8 @@ import play.api.Play.current
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import reactivedatomic.Datomic._ 
 import reactivedatomic._
+import reactivedatomic.Datomic._ 
 import play.modules.datomic._
 
 import models._
@@ -63,7 +63,7 @@ object Application extends Controller {
     )
   }
 
-  val queryDogByName = Datomic.typedQuery[Args2, Args1]("""
+  val queryDogByName = Datomic.typed.query[Args2, Args1]("""
     [ :find ?e :in $ ?name :where [?e :dog/name ?name] ]
   """)
 
@@ -79,7 +79,7 @@ object Application extends Controller {
       tupled
     ).map {
       case (name, age, dogName, characters) =>
-        Datomic.query(queryDogByName, database, DString(dogName)).headOption.collect{ 
+        Datomic.q(queryDogByName, database, DString(dogName)).headOption.collect{ 
           case dogId: DLong =>
             val personId = DId(Common.MY_PART)
             Async {
@@ -102,24 +102,27 @@ object Application extends Controller {
           BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Dog with name $dogName not found")))
         )
       case _ => BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unexpected result")))
-    }.recover{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
   }
 
   def getPerson(id: Long) = Action {
     database.entity(id).map{ entity =>
+      println("dog:"+ entity.tryGetAs[DEntity](Person.person / "dog").get.toMap)
+      println("dogName:"+entity.tryGetAs[DEntity](Person.person / "dog").get.tryGetAs[String](Dog.dog / "name"))
+      println("chars:"+entity.tryGetAs[Set[String]](Person.person / "characters"))
       (for{
           name <- entity.tryGetAs[String](Person.person / "name")
           age <- entity.tryGetAs[Long](Person.person / "age")
           dog <- entity.tryGetAs[DEntity](Person.person / "dog")
           dogName <- dog.tryGetAs[String](Dog.dog / "name")
-          characters <- entity.tryGetAs[Set[String]](Person.person / "characters")
+          characters <- entity.tryGetAs[Set[DRef]](Person.person / "characters").map(_.map(_.toString))
       } yield( Ok(Json.obj(
         "result" -> "OK", 
         "dog" -> Json.obj(
           "name" -> name,
           "age" -> age,
           "dog" -> dogName,
-          "characters" -> characters
+          "characters" -> Json.toJson(characters)
         )))
       )).getOrElse(
         BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person entity not mappable")))
@@ -134,10 +137,10 @@ object Application extends Controller {
     val json = request.body
 
     json.validate(
-      (__ \ 'name).readOpt[String] and
-      (__ \ 'age).readOpt[Long] and
-      (__ \ 'dog).readOpt[String] and
-      (__ \ 'characters).readOpt[Set[String]]
+      (__ \ 'name).readNullable[String] and
+      (__ \ 'age).readNullable[Long] and
+      (__ \ 'dog).readNullable[String] and
+      (__ \ 'characters).readNullable[Set[String]]
       tupled
     ).map{
       case (name: Option[String], age: Option[Long], dogName: Option[String], characters: Option[_]) =>
@@ -145,7 +148,7 @@ object Application extends Controller {
         name.foreach( name => builder += (Person.person / "name" -> DString(name)) )
         age.foreach( age => builder += (Person.person / "age" -> DLong(age)) )
         dogName.foreach{ dogName =>
-          Datomic.query(queryDogByName, database, DString(dogName)).headOption.foreach{ 
+          Datomic.q(queryDogByName, database, DString(dogName)).headOption.foreach{ 
             case dogid: DLong => builder += (Person.person / "dog" -> DRef(DId(dogid)))
             case _ =>
           }
@@ -159,6 +162,6 @@ object Application extends Controller {
             Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
           }
         }
-    }.recover{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
   }
 }

@@ -5,7 +5,7 @@ import scala.concurrent.{Future, ExecutionContext}
 
 import reactivedatomic._
 import Datomic._
-import EntityImplicits._ 
+import DatomicMapping._
 
 object Common {
   // the partition in which I'll store data
@@ -37,15 +37,15 @@ object Dog {
     database.entity(DLong(id))
             .map{ entity =>           
               play.Logger.info("entity:"+entity.entity.keySet)
-              fromEntity[Dog](entity) }
+              DatomicMapping.fromEntity[Dog](entity) }
             .getOrElse(Failure(new RuntimeException("Entity not found")))
   }
 
   def insert(dog: Dog)(implicit conn: Connection, ex: ExecutionContext): Future[Long] = {
     val tempid = DId(Common.MY_PART)
-    val entity = toEntity(tempid)(dog)
+    val entity = DatomicMapping.toEntity(tempid)(dog)
 
-    Datomic.transact(toEntity(tempid)(dog)).flatMap{ tx =>
+    Datomic.transact(DatomicMapping.toEntity(tempid)(dog)).flatMap{ tx =>
       tx.resolve(tempid)
         .map{ realid => Future.successful(realid.as[Long]) }
         .getOrElse(Future.failed(new RuntimeException("failed to resolve tempid")))
@@ -54,15 +54,15 @@ object Dog {
 
   // not "remove" because nothing is removed in Datomic
   def retract(id: Long)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact(retractEntity(DLong(id)))
+    Datomic.transact(Datomic.retractEntity(DLong(id)))
   }
 
   def update(id: Long, dog: Dog)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact( toEntity(DId(id))(dog) )
+    Datomic.transact( DatomicMapping.toEntity(DId(id))(dog) )
   }
 
   def find(name: String)(implicit conn: Connection): Option[(DLong, Dog)] = {
-    val q = Datomic.typedQuery[Args2, Args1]("""
+    val query = Datomic.typed.query[Args2, Args1]("""
       [ 
         :find ?e
         :in $ ?name
@@ -70,10 +70,10 @@ object Dog {
       ]
     """)
 
-    Datomic.query(q, database, DString(name)).headOption.flatMap{
+    Datomic.q(query, database, DString(name)).headOption.flatMap{
       case e: DLong =>
         database.entity(e).flatMap{ entity =>
-          fromEntity[Dog](entity).toOption
+          DatomicMapping.fromEntity[Dog](entity).toOption
         }.map( dog => e -> dog )
       case _ => throw new RuntimeException("unexpected result")
     }
@@ -134,29 +134,29 @@ object Person {
     */  
   def all()(implicit conn: Connection): Try[List[Person]] = {
     // query with 0 Input and 1 Output
-    val q = Datomic.typedQuery[Args0, Args1]("""
+    val query = Datomic.typed.query[Args0, Args1]("""
       [ :find ?e :where [ ?e :person/name ] ]
     """)
 
-    Utils.sequence(Datomic.query(q).collect{ 
+    Utils.sequence(Datomic.q(query).collect{ 
       case e: DLong =>
         database.entity(e).map{ entity =>
-          fromEntity[Person](entity)
+          DatomicMapping.fromEntity[Person](entity)
         }.getOrElse(Failure(new RuntimeException("Entity not found")))
     })
   }
 
   def get(id: Long)(implicit conn: Connection): Try[Person] = {
     database.entity(DLong(id))
-            .map{ entity => fromEntity[Person](entity) }
+            .map{ entity => DatomicMapping.fromEntity[Person](entity) }
             .getOrElse(Failure(new RuntimeException("Entity not found")))
   }
 
   def insert(person: Person)(implicit conn: Connection, ex: ExecutionContext): Future[Long] = {
     val tempid = DId(Common.MY_PART)
-    val entity = toEntity(tempid)(person)
+    val entity = DatomicMapping.toEntity(tempid)(person)
 
-    Datomic.transact(toEntity(tempid)(person)).flatMap{ tx =>
+    Datomic.transact(DatomicMapping.toEntity(tempid)(person)).flatMap{ tx =>
       tx.resolve(tempid)
         .map{ realid => Future.successful(realid.as[Long]) }
         .getOrElse(Future.failed(new RuntimeException("failed to resolve tempid")))
@@ -165,15 +165,15 @@ object Person {
 
   // not "remove" because nothing is removed in Datomic
   def retract(id: Long)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact(retractEntity(DLong(id)))
+    Datomic.transact(Datomic.retractEntity(DLong(id)))
   }
 
   def update(id: Long, person: Person)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact( toEntity(DId(id))(person) )
+    Datomic.transact( DatomicMapping.toEntity(DId(id))(person) )
   }
 
   def find(name: String)(implicit conn: Connection): Option[(DLong, Person)] = {
-    val q = Datomic.typedQuery[Args2, Args1]("""
+    val query = Datomic.typed.query[Args2, Args1]("""
       [ 
         :find ?e
         :in $ ?name
@@ -181,10 +181,10 @@ object Person {
       ]
     """)
 
-    Datomic.query(q, database, DString(name)).headOption.flatMap{
+    Datomic.q(query, database, DString(name)).headOption.flatMap{
       case e: DLong =>
         database.entity(e).flatMap{ entity =>
-          fromEntity[Person](entity).toOption
+          DatomicMapping.fromEntity[Person](entity).toOption
         }.map( person => e -> person )
       case _ => throw new RuntimeException("unexpected result")
     }

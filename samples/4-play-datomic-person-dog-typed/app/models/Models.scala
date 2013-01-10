@@ -5,7 +5,7 @@ import scala.concurrent.{Future, ExecutionContext}
 
 import reactivedatomic._
 import Datomic._
-import EntityImplicits._
+import DatomicMapping._
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -25,12 +25,12 @@ object Dog {
   val schema = Seq(name)
 
 
-  val queryDogByName = Datomic.typedQuery[Args2, Args1]("""
+  val queryDogByName = Datomic.typed.query[Args2, Args1]("""
     [ :find ?e :in $ ?name :where [?e :dog/name ?name] ]
   """)
 
   def getIdByName(dogName: String)(implicit database: DDatabase): Option[Long] = {
-    Datomic.query(queryDogByName, database, DString(dogName)).headOption.collect{ 
+    Datomic.q(queryDogByName, database, DString(dogName)).headOption.collect{ 
       case dogId: DLong => dogId.underlying
     }
   }  

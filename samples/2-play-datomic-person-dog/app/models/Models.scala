@@ -5,7 +5,6 @@ import scala.concurrent.{Future, ExecutionContext}
 
 import reactivedatomic._
 import Datomic._
-import EntityImplicits._
 
 object Common {
   // the partition in which I'll store data
