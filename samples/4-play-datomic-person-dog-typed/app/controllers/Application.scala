@@ -41,7 +41,7 @@ object Application extends Controller {
 
       // inserts dog
       Datomic.transact(
-        Datomic.typed.addToEntity(dogId)(Props(
+        SchemaEntity.add(dogId)(Props(
           Dog.name -> name
         ))
       ).map{ tx =>
@@ -56,7 +56,7 @@ object Application extends Controller {
   }
 
   def getDog(id: Long) = Action {
-    database.entity(DLong(id)).map{ entity =>
+    database.entityOpt(DLong(id)).map{ entity =>
       Ok(Json.obj(
         "result" -> "OK", 
         "data" -> Json.toJson(entity)(Dog.jsonWrites)
@@ -72,7 +72,7 @@ object Application extends Controller {
     json.validate(Person.jsonReads).map{ partialEntity =>
       val personId = DId(Common.MY_PART)
       Async {
-        Datomic.transact( Datomic.addToEntity(personId, partialEntity) ).map{ tx => 
+        Datomic.transact( Entity.add(personId, partialEntity) ).map{ tx => 
           tx.resolve(personId).map{ realId =>
             Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))
           }.getOrElse(
@@ -86,7 +86,7 @@ object Application extends Controller {
   }
 
   def getPerson(id: Long) = Action {
-    database.entity(id).map{ entity =>
+    database.entityOpt(id).map{ entity =>
       Ok(
         Json.obj(
           "result" -> "OK", 
@@ -99,7 +99,7 @@ object Application extends Controller {
   }
 
   def getPerson2(id: Long) = Action {
-    database.entity(id).map{ entity =>
+    database.entityOpt(id).map{ entity =>
       Ok(
         Json.obj(
           "result" -> "OK", 
@@ -124,7 +124,7 @@ object Application extends Controller {
       ).reduce.andThen(Person.jsonReads)
     ).map{ partialEntity =>
       Async {
-        Datomic.transact( Datomic.addToEntity(DId(id), partialEntity) ).map{ tx => 
+        Datomic.transact( Entity.add(DId(id), partialEntity) ).map{ tx => 
           Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
         }
       }

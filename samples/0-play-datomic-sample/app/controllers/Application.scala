@@ -26,20 +26,20 @@ object Application extends Controller {
     implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
     
     val fut = Datomic.transact(
-      Datomic.addToEntity(DId(Partition.USER))(
+      Entity.add(DId(Partition.USER))(
         person / "name" -> "toto",
         person / "age" -> 30
       ),
-      Datomic.addToEntity(DId(Partition.USER))(
+      Entity.add(DId(Partition.USER))(
         person / "name" -> "tutu",
         person / "age" -> 54
       ),
-      Datomic.addToEntity(DId(Partition.USER))(
+      Entity.add(DId(Partition.USER))(
         person / "name" -> "tata",
         person / "age" -> 23
       )
     ).map{ tx => 
-      val query = Datomic.typed.query[Args2, Args3]("""
+      val query = Query.manual[Args2, Args3]("""
       [ 
         :find ?e ?name ?a
         :in $ ?age

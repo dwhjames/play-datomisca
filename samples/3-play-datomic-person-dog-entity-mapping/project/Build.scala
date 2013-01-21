@@ -10,7 +10,7 @@ object ApplicationBuild extends Build {
     val datomicVersion  = "0.8.3731"
 
     val appDependencies = Seq(
-      "play.modules.datomic" %% "datomic" % "0.1-SNAPSHOT",
+      "play.modules.datomic" %% "play-datomic" % "0.1-SNAPSHOT",
       "com.datomic" % "datomic-free" % datomicVersion exclude("org.slf4j", "slf4j-nop")      
     )
 

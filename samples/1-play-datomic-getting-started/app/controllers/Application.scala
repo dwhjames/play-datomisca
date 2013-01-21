@@ -30,7 +30,7 @@ object Application extends Controller {
   implicit val conn = Datomic.connect(uri)
 
   def countCommunities = Action { 
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
@@ -41,13 +41,13 @@ object Application extends Controller {
   }
 
   def getFirstEntity = Action{
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     Datomic.q(query).headOption.collect{ 
       case eid: DLong => 
-        database.entity(eid.as[DLong]).map{ e =>
+        database.entityOpt(eid.as[DLong]).map{ e =>
           Ok(Json.toJson(e.toMap.map{ case(k, v) => k.toString -> v.toString }))
         }.getOrElse(BadRequest("Entity not found"))
     }.getOrElse(BadRequest("Entity not found"))
@@ -55,13 +55,13 @@ object Application extends Controller {
   }
 
   def getCommunityNames = Action{
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     val l = Datomic.q(query).collect{
       case eid: DLong => 
-        database.entity(eid).map{ entity =>
+        database.entityOpt(eid).map{ entity =>
           entity.tryGetAs[DString](community / "name").map(Datomic.fromDatomic[String](_))
         }.get
     }
@@ -73,13 +73,13 @@ object Application extends Controller {
   }
 
   def getCommunityNeighborHoods = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     val l = Datomic.q(query).collect{
       case eid: DLong => 
-        database.entity(eid).map{ entity =>
+        database.entityOpt(eid).map{ entity =>
           entity.tryGetAs[DEntity](community / "neighborhood").map(_.toMap.map{ case(k, v) => k.toString -> v.toString })
           }.get
     }
@@ -91,14 +91,14 @@ object Application extends Controller {
   }
 
   def getNeighborHoodCommunities = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
     
     Datomic.q(query).headOption.collect{ 
       case eid: DLong =>
         val communities = for{ 
-          entity <- database.entity(eid)
+          entity <- database.entityOpt(eid)
           neighborhood <- entity.getAs[DEntity](community / "neighborhood")
           communities <- neighborhood.getAs[Set[DEntity]](community / "_neighborhood")
         } yield(communities)
@@ -117,7 +117,7 @@ object Application extends Controller {
   }
 
   def findAllCommunityNames = Action {
-    val query = Datomic.typed.query[Args0, Args2]("""
+    val query = Query("""
       [:find ?c ?n :where [?c :community/name ?n]]
     """)
 
@@ -129,7 +129,7 @@ object Application extends Controller {
   }
 
   def findAllCommunityNamesAndUrls = Action {
-    val query = Datomic.typed.query[Args0, Args2]("""
+    val query = Query("""
       [:find ?n ?u :where [?c :community/name ?n][?c :community/url ?u]]
     """)
 
@@ -141,7 +141,7 @@ object Application extends Controller {
   }
 
   def findCategoriesForBelltown = Action {
-    val query = Datomic.typed.query[Args0, Args2]("""
+    val query = Query("""
       [:find ?e ?c :where [?e :community/name "belltown"][?e :community/category ?c]]
     """)
 
@@ -154,7 +154,7 @@ object Application extends Controller {
   }
 
   def findTwitterCommunities = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?n :where [?c :community/name ?n][?c :community/type :community.type/twitter]]
     """)
 
@@ -167,7 +167,7 @@ object Application extends Controller {
   }
 
   def findNECommunities = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?c_name 
        :where [?c :community/name ?c_name]
               [?c :community/neighborhood ?n]
@@ -185,7 +185,7 @@ object Application extends Controller {
   }
 
   def findCommunitiesRegions = Action {
-    val query = Datomic.typed.query[Args0, Args2]("""
+    val query = Query("""
       [:find ?c_name ?r_name 
       :where [?c :community/name ?c_name]
              [?c :community/neighborhood ?n]
@@ -203,7 +203,7 @@ object Application extends Controller {
   }
   
   def findTwitterFacebook = Action {
-    val query = Datomic.typed.query[Args2, Args1]("""
+    val query = Query("""
       [
        :find ?n 
        :in $ ?t 
@@ -223,7 +223,7 @@ object Application extends Controller {
   }
 
   def findTwitterFacebookList = Action {
-    val query = Datomic.typed.query[Args2, Args2]("""
+    val query = Query("""
       [
        :find ?n ?t 
        :in $ [?t ...] 
@@ -245,7 +245,7 @@ object Application extends Controller {
   }
 
   def findNonCommercialEmaillistOrCommercialWebSites = Action {
-    val query = Datomic.typed.query[Args2, Args3]("""
+    val query = Query("""
       [
        :find ?n ?t ?ot 
        :in $ [[?t ?ot]] 
@@ -272,7 +272,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesAfterCInAlphaOrder = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [
         :find ?n 
         :where [?c :community/name ?n] 
@@ -291,7 +291,7 @@ object Application extends Controller {
   }
 
   def findAllCommWallingford = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [
        :find ?n 
        :where [(fulltext $ :community/name "Wallingford") [[?e ?n]]]
@@ -309,7 +309,7 @@ object Application extends Controller {
   }
 
   def findAllCommWebsitesFood = Action {
-    val query = Datomic.typed.query[Args3, Args2]("""
+    val query = Query("""
       [
         :find ?name ?cat 
         :in $ ?type ?search 
@@ -330,13 +330,13 @@ object Application extends Controller {
   }
 
   def findAllCommNamesTwitter = Action {
-    val rule = Datomic.rules("""
+    val rule = Query.rules("""
       [[
         [twitter ?c]
         [?c :community/type :community.type/twitter]
       ]]
     """)
-    val query = Datomic.typed.query[Args2, Args1]("""
+    val query = Query("""
       [
         :find ?n 
         :in $ % 
@@ -356,7 +356,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesNESW = Action {
-    val rule = Datomic.rules("""
+    val rule = Query.rules("""
       [[
         [region ?c ?r]
         [?c :community/neighborhood ?n]
@@ -365,7 +365,7 @@ object Application extends Controller {
         [?re :db/ident ?r]
       ]]
     """)
-    val query = Datomic.typed.query[Args2, Args1]("""
+    val query = Query("""
       [
         :find ?n 
         :in $ % 
@@ -374,7 +374,7 @@ object Application extends Controller {
       ]
     """)
 
-    val query2 = Datomic.typed.query[Args2, Args1]("""
+    val query2 = Query("""
       [
         :find ?n 
         :in $ % 
@@ -395,7 +395,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesNESWOr = Action {
-    val rule = Datomic.rules("""
+    val rule = Query.rules("""
       [[
         [region ?c ?r]
         [?c :community/neighborhood ?n]
@@ -422,7 +422,7 @@ object Application extends Controller {
         [southern ?c] (region ?c :region/se)]
        ]
     """)
-    val query = Datomic.typed.query[Args2, Args1]("""
+    val query = Query("""
       [
        :find ?n :in $ % 
        :where [?c :community/name ?n]
@@ -442,7 +442,7 @@ object Application extends Controller {
   }
 
   def findAllDBTx = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?when :where [?tx :db/txInstant ?when]]
     """)
 
@@ -452,7 +452,7 @@ object Application extends Controller {
     val data_tx_date = sorted(0)
     val schema_tx_date = sorted(1)
 
-    val query2 = Datomic.typed.query[Args1, Args1]("""
+    val query2 = Query("""
       [:find ?c :where [?c :community/name]]
     """)
     
@@ -490,7 +490,7 @@ object Application extends Controller {
   }
 
   def makeNewPartition = Action {
-    val newPartition = Datomic.addToEntity(DId(Partition.DB))(
+    val newPartition = Entity.add(DId(Partition.DB))(
       Namespace.DB / "ident" -> ":communities",
       Namespace.DB.INSTALL / "_partition" -> "db.part/db"
     )
@@ -503,7 +503,7 @@ object Application extends Controller {
   }
 
   def makeNewComm = Action {
-    val newComm = Datomic.addToEntity(DId(Partition(Keyword("communities"))))(
+    val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
 
@@ -515,13 +515,13 @@ object Application extends Controller {
   }  
 
   def updateComm = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
     val id = Datomic.q(query).head.asInstanceOf[DLong]
     
-    val op = Datomic.add(DId(id))( Namespace("community") / "category" -> "free stuff" )
+    val op = Fact.add(DId(id))( Namespace("community") / "category" -> "free stuff" )
     Async {
       Datomic.transact(op).map{ tx =>
         Ok(Json.obj("tx" -> tx.toString))
@@ -531,13 +531,13 @@ object Application extends Controller {
   }
 
   def retractComm = Action {
-    val query = Datomic.typed.query[Args0, Args1]("""
+    val query = Query("""
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
     val id = Datomic.q(query).head.asInstanceOf[DLong]
     
-    val op = Datomic.retractEntity(id)
+    val op = Entity.retract(id)
     Async {
       Datomic.transact(op).map{ tx =>
         Ok(Json.obj("tx" -> tx.toString))
@@ -547,7 +547,7 @@ object Application extends Controller {
   }  
   
   def transReport = Action {
-    val newComm = Datomic.addToEntity(DId(Partition(Keyword("communities"))))(
+    val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
 
@@ -563,7 +563,7 @@ object Application extends Controller {
           case Some(report) =>
             play.Logger.info("hello2")
 
-            val query = Datomic.typed.query[Args2, Args4]("""
+            val query = Query("""
               [
                :find ?e ?aname ?v ?added
                :in $ [[?e ?a ?v _ ?added]]

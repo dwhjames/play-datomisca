@@ -36,7 +36,7 @@ object Application extends Controller {
 
       // inserts dog
       Datomic.transact(
-        Datomic.addToEntity(dogId)(
+        Entity.add(dogId)(
           Dog.dog / "name" -> name
         )
       ).map{ tx =>
@@ -51,7 +51,7 @@ object Application extends Controller {
   }
 
   def getDog(id: Long) = Action {
-    database.entity(DLong(id)).map{ entity =>
+    database.entityOpt(DLong(id)).map{ entity =>
       Ok(Json.obj(
         "result" -> "OK", 
         "dog" -> Json.obj(
@@ -63,7 +63,7 @@ object Application extends Controller {
     )
   }
 
-  val queryDogByName = Datomic.typed.query[Args2, Args1]("""
+  val queryDogByName = Query("""
     [ :find ?e :in $ ?name :where [?e :dog/name ?name] ]
   """)
 
@@ -84,7 +84,7 @@ object Application extends Controller {
             val personId = DId(Common.MY_PART)
             Async {
               Datomic.transact(
-                Datomic.addToEntity(personId)(
+                Entity.add(personId)(
                   Person.person / "name" -> name,
                   Person.person / "age" -> age,
                   Person.person / "dog" -> DRef(DId(dogId)),
@@ -106,7 +106,7 @@ object Application extends Controller {
   }
 
   def getPerson(id: Long) = Action {
-    database.entity(id).map{ entity =>
+    database.entityOpt(id).map{ entity =>
       println("dog:"+ entity.tryGetAs[DEntity](Person.person / "dog").get.toMap)
       println("dogName:"+entity.tryGetAs[DEntity](Person.person / "dog").get.tryGetAs[String](Dog.dog / "name"))
       println("chars:"+entity.tryGetAs[Set[String]](Person.person / "characters"))
@@ -158,7 +158,7 @@ object Application extends Controller {
         }
         
         Async{
-          Datomic.transact(AddToEntity(DId(id), builder.result)).map{ tx =>
+          Datomic.transact(Entity.add(DId(id), builder.result)).map{ tx =>
             Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
           }
         }

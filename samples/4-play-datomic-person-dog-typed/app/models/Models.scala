@@ -25,7 +25,7 @@ object Dog {
   val schema = Seq(name)
 
 
-  val queryDogByName = Datomic.typed.query[Args2, Args1]("""
+  val queryDogByName = Query("""
     [ :find ?e :in $ ?name :where [?e :dog/name ?name] ]
   """)
 
@@ -69,7 +69,7 @@ object Person {
 
   // Json Reads/Writes
   // this one is a bit special as it searches for Dog in the DB to link it to Person
-  def jsonReads(implicit database: DDatabase): Reads[PartialAddToEntity] = (
+  def jsonReads(implicit database: DDatabase): Reads[PartialAddEntity] = (
     (__ \ 'name).read( readAttr(Person.name) ) and
     (__ \ 'age).read( readAttr(Person.age) ) and
     (__ \ 'dog).read( 

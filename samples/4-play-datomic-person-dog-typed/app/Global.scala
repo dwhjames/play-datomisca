@@ -23,7 +23,7 @@ object Global extends GlobalSettings {
 
     // TODO : here we should verify first that schema is not already in DB
     val fut = Datomic.transact(
-      Seq(Datomic.addPartition(Common.MY_PART)) ++ 
+      Seq(Fact.partition(Common.MY_PART)) ++ 
       Dog.schema ++ 
       Person.schema
     ).map{ tx =>

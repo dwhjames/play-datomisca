@@ -42,16 +42,16 @@ object Implicits {
   implicit val Keyword2Json = Writes[Keyword]( kw => JsString(kw.toString))
   implicit val DEntity2Json = Writes[DEntity]( entity => Json.toJson(entity.toMap.map{ case(k,v) => k.toString -> v }) )
 
-  implicit val PartialAddToEntityMonoid: Monoid[PartialAddToEntity] = new Monoid[PartialAddToEntity] {
-    def append(a1: PartialAddToEntity, a2: PartialAddToEntity) = a1 ++ a2
-    def identity = PartialAddToEntity.empty
+  implicit val PartialAddToEntityMonoid: Monoid[PartialAddEntity] = new Monoid[PartialAddEntity] {
+    def append(a1: PartialAddEntity, a2: PartialAddEntity) = a1 ++ a2
+    def identity = PartialAddEntity.empty
   }
 
-  implicit val PartialAddToEntityReducer: Reducer[PartialAddToEntity, PartialAddToEntity] = Reducer( p => p )
+  implicit val PartialAddToEntityReducer: Reducer[PartialAddEntity, PartialAddEntity] = Reducer( p => p )
 
   /*def readAttr[DD <: DatomicData, Card <: Cardinality, T](attr: Attribute[DD, Card])
   (implicit ac: Attribute2PartialAddToEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
-    Reads[PartialAddToEntity]{ js => 
+    Reads[PartialAddEntity]{ js => 
       (__ \ attr.toString).asSingleJsResult(js).flatMap{ jsv =>
         jsv.validate[T](jsReads).map{ t =>
           ac.convert(attr).write(t)
@@ -62,8 +62,8 @@ object Implicits {
 
   def readAttr[T] = new {
     def apply[DD <: DatomicData, Card <: Cardinality](attr: Attribute[DD, Card])
-      (implicit ac: Attribute2PartialAddToEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
-      Reads[PartialAddToEntity]{ js => 
+      (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
+      Reads[PartialAddEntity]{ js => 
         //(__ \ attr.ident.name).asSingleJsResult(js).flatMap{ jsv =>
           js.validate[T](jsReads).map{ t =>
             ac.convert(attr).write(t)
@@ -75,8 +75,8 @@ object Implicits {
 
   def readAttrWithNs[T] = new {
     def apply[DD <: DatomicData, Card <: Cardinality](attr: Attribute[DD, Card])
-      (implicit ac: Attribute2PartialAddToEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
-      Reads[PartialAddToEntity]{ js => 
+      (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
+      Reads[PartialAddEntity]{ js => 
         //(__ \ attr.ident.toString).asSingleJsResult(js).flatMap{ jsv =>
           js.validate[T](jsReads).map{ t =>
             ac.convert(attr).write(t)

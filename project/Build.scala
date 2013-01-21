@@ -26,14 +26,16 @@ object ApplicationBuild extends Build {
   //lazy val datomicDriver = RootProject(uri("https://github.com/pellucidanalytics/datomic.git#master"))
 
   lazy val playDatomic = Project(
-    "datomic", file("."),
+    "play-datomic", file("."),
     settings = BuildSettings.buildSettings ++ Defaults.defaultSettings ++ Seq(
       shellPrompt := ShellPrompt.buildShellPrompt,
       resolvers ++= typesafeRepo,
       libraryDependencies ++= Seq(
         "play" %% "play" % BuildSettings.playVersion,
         "pellucid" %% "datomic" % "0.1-SNAPSHOT",
-        "com.datomic" % "datomic-free" % BuildSettings.datomicVersion % "provided" exclude("org.slf4j", "slf4j-nop"),
+        "com.datomic" % "datomic-free" % BuildSettings.datomicVersion % "provided" 
+          exclude("org.slf4j", "slf4j-nop")
+          exclude("org.jboss.netty", "netty"),
         /*"org.clojure" % "clojure" % "1.4.0",
         "org.clojure" % "data.json" % "0.1.2",
         "net.java.dev.jets3t" % "jets3t" % "0.8.1",
