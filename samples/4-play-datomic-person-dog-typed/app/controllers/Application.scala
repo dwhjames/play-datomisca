@@ -44,70 +44,73 @@ object Application extends Controller {
         SchemaEntity.add(dogId)(Props(
           Dog.name -> name
         ))
-      ).map{ tx =>
+      ) map { tx =>
         // resolves real ID
-        tx.resolve(dogId).map{ realid: DLong =>
-          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid.underlying)))
-        }.getOrElse(
-          BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> "unable to resolve Id")))
-        )
+        tx.resolve(dogId) map { realid: DLong =>
+          Ok(Json.obj("result" -> "OK", "id" -> realid.underlying))
+        } getOrElse {
+          BadRequest(Json.obj("result" -> "KO", "error" -> "unable to resolve Id"))
+        }
       }
     }
   }
 
   def getDog(id: Long) = Action {
-    database.entityOpt(DLong(id)).map{ entity =>
+    try {
+      val entity = database.entity(id)
       Ok(Json.obj(
-        "result" -> "OK", 
-        "data" -> Json.toJson(entity)(Dog.jsonWrites)
+        "result" -> "OK",
+        "data"   -> Json.toJson(entity)(Dog.jsonWrites)
       ))
-    }.getOrElse(
-      BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unable to resolve enttiy with id:$id")))
-    )
+    } catch {
+      case _ =>
+        BadRequest(Json.obj("result" -> "KO", "error" -> s"unable to resolve enttiy with id:$id"))
+    }
   }
 
   def insertPerson = Action(parse.json) { request =>
     val json = request.body
 
-    json.validate(Person.jsonReads).map{ partialEntity =>
+    json.validate(Person.jsonReads) map { partialEntity =>
       val personId = DId(Common.MY_PART)
       Async {
-        Datomic.transact( Entity.add(personId, partialEntity) ).map{ tx => 
-          tx.resolve(personId).map{ realId =>
+        Datomic.transact( Entity.add(personId, partialEntity) ) map { tx =>
+          tx.resolve(personId) map { realId =>
             Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))
-          }.getOrElse(
+          } getOrElse {
             BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> "unable to resolve inserted person entity")))
-          )
+          }
         }
       }
-    }.recoverTotal{ e =>
+    } recoverTotal { e =>
       BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> JsError.toFlatJson(e))))
     }
   }
 
   def getPerson(id: Long) = Action {
-    database.entityOpt(id).map{ entity =>
-      Ok(
-        Json.obj(
-          "result" -> "OK", 
-          "data" -> Json.toJson(entity)
-        )
-      )
-    }.getOrElse{
-      BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found")))
+    try {
+      val entity = database.entity(id)
+      Ok(Json.obj(
+        "result" -> "OK",
+        "data"   -> Json.toJson(entity)
+      ))
+    } catch {
+      case _ =>
+        BadRequest(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found"))
     }
   }
 
   def getPerson2(id: Long) = Action {
-    database.entityOpt(id).map{ entity =>
-      Ok(
-        Json.obj(
-          "result" -> "OK", 
-          "data" -> Json.toJson(entity)(Person.jsonWrites)
-        )
-      )
-    }.getOrElse{
-      BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found")))
+    try {
+      val entity = database.entity(id)
+      Ok(Json.obj(
+        "result" -> "OK",
+        "data"   -> Json.toJson(entity)(Person.jsonWrites)
+      ))
+    } catch {
+      case t: Throwable =>
+        BadRequest(t.getMessage)
+        // BadRequest(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found"))
     }
   }
 
@@ -117,17 +120,19 @@ object Application extends Controller {
 
     // validates Json format and then converts it into Datomic Entity
     json.validate(
-      (((__ \ 'name).json.pickBranch keepAnd (__ \ 'name).read[String]) and
-       ((__ \ 'age).json.pickBranch keepAnd (__ \ 'age).read[Long]) and
-       ((__ \ 'dog).json.pickBranch keepAnd (__ \ 'dog).read[String]) and
+      (((__ \ 'name)      .json.pickBranch keepAnd (__ \ 'name)      .read[String]) and
+       ((__ \ 'age)       .json.pickBranch keepAnd (__ \ 'age)       .read[Long])   and
+       ((__ \ 'dog)       .json.pickBranch keepAnd (__ \ 'dog)       .read[String]) and
        ((__ \ 'characters).json.pickBranch keepAnd (__ \ 'characters).read[Set[String]])
       ).reduce.andThen(Person.jsonReads)
-    ).map{ partialEntity =>
+    ) map { partialEntity =>
       Async {
-        Datomic.transact( Entity.add(DId(id), partialEntity) ).map{ tx => 
-          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
+        Datomic.transact( Entity.add(DId(id), partialEntity) ) map { tx =>
+          Ok(Json.obj("result" -> "OK", "id" -> tx.toString))
         }
       }
-    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    } recoverTotal { errors =>
+      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+    }
   }
 }

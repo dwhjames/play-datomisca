@@ -30,17 +30,17 @@ object Person {
   }
 
   // Attributes
-  val name = Attribute( person / "name", SchemaType.string, Cardinality.one).withDoc("Person's name")
-  val age = Attribute( person / "age", SchemaType.long, Cardinality.one).withDoc("Person's age")
-  val dog = Attribute( person / "dog", SchemaType.ref, Cardinality.one).withDoc("Person's dog")
-  val characters = Attribute( person / "characters", SchemaType.ref, Cardinality.many).withDoc("Person's characterS")
+  val name       = Attribute(person / "name",       SchemaType.string, Cardinality.one) .withDoc("Person's name")
+  val age        = Attribute(person / "age",        SchemaType.long,   Cardinality.one) .withDoc("Person's age")
+  val dog        = Attribute(person / "dog",        SchemaType.ref,    Cardinality.one) .withDoc("Person's dog")
+  val characters = Attribute(person / "characters", SchemaType.ref,    Cardinality.many).withDoc("Person's characters")
 
   // Characters
   val violent = AddIdent(person.characters / "violent")
-  val weak = AddIdent(person.characters / "weak")
-  val clever = AddIdent(person.characters / "clever")
-  val dumb = AddIdent(person.characters / "dumb")
-  val stupid = AddIdent(person.characters / "stupid")
+  val weak    = AddIdent(person.characters / "weak")
+  val clever  = AddIdent(person.characters / "clever")
+  val dumb    = AddIdent(person.characters / "dumb")
+  val stupid  = AddIdent(person.characters / "stupid")
 
   // Schema
   val schema = Seq(

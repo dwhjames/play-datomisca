@@ -15,7 +15,7 @@ import Datomic._
 import play.modules.datomic._
 
 object Application extends Controller {
-  def index = Action { 
+  def index = Action { Async {
     val uri = DatomicPlugin.uri("mem")
     implicit val conn = Datomic.connect(uri)
 
@@ -24,8 +24,8 @@ object Application extends Controller {
     }
 
     implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    
-    val fut = Datomic.transact(
+
+    Datomic.transact(
       Entity.add(DId(Partition.USER))(
         person / "name" -> "toto",
         person / "age" -> 30
@@ -38,7 +38,7 @@ object Application extends Controller {
         person / "name" -> "tata",
         person / "age" -> 23
       )
-    ).map{ tx => 
+    ) map { tx =>
       val query = Query.manual[Args2, Args3]("""
       [ 
         :find ?e ?name ?a
@@ -50,13 +50,8 @@ object Application extends Controller {
       """)
 
       Datomic.q(query, database, DLong(45L))
+    } map { l =>
+      Ok(l.toString)
     }
-    Async {
-      fut.map { l => Ok(l.toString) }
-    }
-    
-
-  }
-
-
+  }}
 }

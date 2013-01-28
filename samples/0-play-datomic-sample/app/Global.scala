@@ -21,15 +21,15 @@ object Global extends GlobalSettings {
     }
 
     val violent = AddIdent(person.character / "violent")
-    val weak = AddIdent(person.character / "weak")
-    val clever = AddIdent(person.character / "clever")
-    val dumb = AddIdent(person.character / "dumb")
-    val stupid = AddIdent(person.character / "stupid")
+    val weak    = AddIdent(person.character / "weak")
+    val clever  = AddIdent(person.character / "clever")
+    val dumb    = AddIdent(person.character / "dumb")
+    val stupid  = AddIdent(person.character / "stupid")
 
     val schema = Seq(
-      Attribute( person / "name", SchemaType.string, Cardinality.one).withDoc("Person's name"),
-      Attribute( person / "age", SchemaType.long, Cardinality.one).withDoc("Person's age"),
-      Attribute( person / "character", SchemaType.ref, Cardinality.many).withDoc("Person's characterS"),
+      Attribute(person / "name",      SchemaType.string, Cardinality.one) .withDoc("Person's name").withUnique(Unique.identity),
+      Attribute(person / "age",       SchemaType.long,   Cardinality.one) .withDoc("Person's age"),
+      Attribute(person / "character", SchemaType.ref,    Cardinality.many).withDoc("Person's characters"),
       violent,
       weak,
       clever,
@@ -39,7 +39,7 @@ object Global extends GlobalSettings {
 
     implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
     implicit val conn = Datomic.connect(uri)
-    val fut = Datomic.transact(schema).map{ tx =>
+    val fut = Datomic.transact(schema) map { tx =>
       println("bootstrapped data")
     }
     

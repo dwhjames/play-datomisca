@@ -21,7 +21,7 @@ object Common {
 object Dog {
   val dog = Namespace("dog")
 
-  val name = Attribute( dog / "name", SchemaType.string, Cardinality.one).withDoc("Dog's name")
+  val name = Attribute(dog / "name", SchemaType.string, Cardinality.one).withDoc("Dog's name")
   val schema = Seq(name)
 
 
@@ -30,7 +30,7 @@ object Dog {
   """)
 
   def getIdByName(dogName: String)(implicit database: DDatabase): Option[Long] = {
-    Datomic.q(queryDogByName, database, DString(dogName)).headOption.collect{ 
+    Datomic.q(queryDogByName, database, DString(dogName)).headOption map {
       case dogId: DLong => dogId.underlying
     }
   }  
@@ -49,17 +49,17 @@ object Person {
   }
 
   // Attributes
-  val name = Attribute( person / "name", SchemaType.string, Cardinality.one).withDoc("Person's name")
-  val age = Attribute( person / "age", SchemaType.long, Cardinality.one).withDoc("Person's age")
-  val dog = RefAttribute[DEntity]( person / "dog").withDoc("Person's dog")
-  val characters = Attribute( person / "characters", SchemaType.ref, Cardinality.many).withDoc("Person's characterS")
+  val name       = Attribute(person / "name",       SchemaType.string, Cardinality.one).withDoc("Person's name")
+  val age        = Attribute(person / "age",        SchemaType.long,   Cardinality.one).withDoc("Person's age")
+  val dog        = RefAttribute[DEntity]( person / "dog").withDoc("Person's dog")
+  val characters = Attribute(person / "characters", SchemaType.ref,    Cardinality.many).withDoc("Person's characters")
 
   // Characters
   val violent = AddIdent(person.characters / "violent")
-  val weak = AddIdent(person.characters / "weak")
-  val clever = AddIdent(person.characters / "clever")
-  val dumb = AddIdent(person.characters / "dumb")
-  val stupid = AddIdent(person.characters / "stupid")
+  val weak    = AddIdent(person.characters / "weak")
+  val clever  = AddIdent(person.characters / "clever")
+  val dumb    = AddIdent(person.characters / "dumb")
+  val stupid  = AddIdent(person.characters / "stupid")
 
   // Schema
   val schema = Seq(
@@ -70,13 +70,13 @@ object Person {
   // Json Reads/Writes
   // this one is a bit special as it searches for Dog in the DB to link it to Person
   def jsonReads(implicit database: DDatabase): Reads[PartialAddEntity] = (
-    (__ \ 'name).read( readAttr(Person.name) ) and
-    (__ \ 'age).read( readAttr(Person.age) ) and
-    (__ \ 'dog).read( 
+    (__ \ 'name).read(readAttr(Person.name)) and
+    (__ \ 'age) .read(readAttr(Person.age))  and
+    (__ \ 'dog) .read(
       // retrieves the dog from DB
       Reads.of[String]
         .map{ dogName => 
-          Dog.getIdByName(dogName).map{ id => 
+          Dog.getIdByName(dogName) map { id =>
             // creates a PartialAddToEntity
             Props( Person.dog -> DRef(DId(id)) ).convert
           }
@@ -90,10 +90,10 @@ object Person {
   )
 
   def jsonWrites = (
-    (__ \ "name").write( writeAttr(Person.name) ) and
-    (__ \ "age").write( writeAttr(Person.age) ) and
-    (__ \ "dog").write( writeAttr[Ref[DEntity]](Person.dog) ) and 
-    (__ \ "characters").write( writeAttr(Person.characters))
+    (__ \ "name")      .write(writeAttr(Person.name)) and
+    (__ \ "age")       .write(writeAttr(Person.age))  and
+    (__ \ "dog")       .write(writeAttr(Person.dog))  and
+    (__ \ "characters").write(writeAttr(Person.characters))
     join
   )
 }

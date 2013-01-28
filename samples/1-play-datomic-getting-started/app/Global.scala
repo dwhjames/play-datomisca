@@ -23,10 +23,10 @@ object Global extends GlobalSettings {
     val schema = Datomic.parseOps(schemaContent)
     println("schema:"+schema)
 
-    schema.map{ schema =>
+    schema map { schema =>
       implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
       implicit val conn = Datomic.connect(uri)
-      val fut = Datomic.transact(schema).flatMap{ tx =>
+      val fut = Datomic.transact(schema) flatMap { tx =>
         play.Logger.info("bootstrapped schema")
 
         val dataIs = current.resourceAsStream("seattle-data0.dtm").get
@@ -34,15 +34,15 @@ object Global extends GlobalSettings {
         val dataContent = Source.fromInputStream(dataIs).mkString
         val data = Datomic.parseOps(dataContent)
 
-        data.map{ data =>
-          Datomic.transact(data).map{ tx =>
+        data map { data =>
+          Datomic.transact(data) map { tx =>
             play.Logger.info("bootstrapped data with %d entities".format(tx.tempids.size))
           }
-        }.get
+        } get
       }
       
       Await.result(fut, Duration("3 seconds"))
-    }.get
+    } get
 
   }
 

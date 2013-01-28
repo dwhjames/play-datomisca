@@ -40,36 +40,40 @@ object Application extends Controller {
     
   }
 
-  def getFirstEntity = Action{
+  def getFirstEntity = Action {
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
-    Datomic.q(query).headOption.collect{ 
-      case eid: DLong => 
-        database.entityOpt(eid.as[DLong]).map{ e =>
-          Ok(Json.toJson(e.toMap.map{ case(k, v) => k.toString -> v.toString }))
-        }.getOrElse(BadRequest("Entity not found"))
-    }.getOrElse(BadRequest("Entity not found"))
-   
+    try {
+      Datomic.q(query).headOption map {
+        case eid: DLong =>
+          val e = database.entity(eid)
+          Ok(Json.toJson(e.toMap map { case (k, v) => k.toString -> v.toString }))
+      } getOrElse {
+        NotFound("No communities")
+      }
+    } catch {
+      case e: Throwable => InternalServerError(e.getMessage)
+    }
   }
 
-  def getCommunityNames = Action{
+  def getCommunityNames = Action {
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
-    val l = Datomic.q(query).collect{
-      case eid: DLong => 
-        database.entityOpt(eid).map{ entity =>
-          entity.tryGetAs[DString](community / "name").map(Datomic.fromDatomic[String](_))
-        }.get
-    }
-    Utils.sequence(l).map{ l =>
+    try {
+      val l = Datomic.q(query) map {
+        case eid: DLong =>
+          val entity = database.entity(eid)
+          val name = entity(community / "name").as[DString]
+          Datomic.fromDatomic[String](name)
+      }
       Ok(Json.toJson(l))
-    }.recover{
-      case e: Exception => BadRequest(e.getMessage)
-    }.get
+    } catch {
+      case e: Throwable => InternalServerError(e.getMessage)
+    }
   }
 
   def getCommunityNeighborHoods = Action {
@@ -77,43 +81,38 @@ object Application extends Controller {
       [:find ?c :where [?c :community/name]]
     """)
 
-    val l = Datomic.q(query).collect{
-      case eid: DLong => 
-        database.entityOpt(eid).map{ entity =>
-          entity.tryGetAs[DEntity](community / "neighborhood").map(_.toMap.map{ case(k, v) => k.toString -> v.toString })
-          }.get
-    }
-    Utils.sequence(l).map{ l =>
+    try {
+      val l = Datomic.q(query) map {
+        case eid: DLong =>
+          val entity = database.entity(eid)
+          val neighborhood = entity(community / "neighborhood").as[DEntity]
+          neighborhood.toMap map { case (k, v) => k.toString -> v.toString }
+      }
       Ok(Json.toJson(l))
-    }.recover{
-      case e: Exception => BadRequest(e.getMessage)
-    }.get
+    } catch {
+      case e: Throwable => InternalServerError(e.getMessage)
+    }
   }
 
   def getNeighborHoodCommunities = Action {
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
-    
-    Datomic.q(query).headOption.collect{ 
-      case eid: DLong =>
-        val communities = for{ 
-          entity <- database.entityOpt(eid)
-          neighborhood <- entity.getAs[DEntity](community / "neighborhood")
-          communities <- neighborhood.getAs[Set[DEntity]](community / "_neighborhood")
-        } yield(communities)
-        
-        communities.map{ communities =>
-          val names = for {
-            comm <- communities
-            name <- comm.getAs[String](community / "name")
-          } yield(name)
 
+    try {
+      Datomic.q(query).headOption map {
+        case eid: DLong =>
+          val entity = database.entity(eid)
+          val neighborhood = entity(community / "neighborhood").as[DEntity]
+          val communities = neighborhood(community / "_neighborhood").as[Set[DEntity]]
+          val names = communities map { comm => comm(community / "name").as[String] }
           Ok(Json.toJson(names))
-        }.getOrElse(BadRequest("entity not resolved"))
-
-    }.getOrElse(BadRequest("no community found"))
-    
+      } getOrElse {
+        NotFound("no community found")
+      }
+    } catch {
+      case e: Throwable => InternalServerError(e.getMessage)
+    }
   }
 
   def findAllCommunityNames = Action {
@@ -122,7 +121,7 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).collect{
+      Datomic.q(query) map {
         case (eid: DLong, name: DString) => name.as[String]
       }
     ))
@@ -134,7 +133,7 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).collect{
+      Datomic.q(query) map {
         case (name: DString, url: DString) => Json.obj("name" -> name.as[String], "url" -> url.as[String])
       }
     ))
@@ -146,9 +145,8 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).map{
+      Datomic.q(query) map {
         case (e: DLong, c: DString) => Json.obj("id" -> e.as[Long], "url" -> c.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -159,9 +157,8 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).map{
+      Datomic.q(query) map {
         case (e: DString) => e.as[String]
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -177,9 +174,8 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).map{
+      Datomic.q(query) map {
         case (e: DString) => e.as[String]
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -195,9 +191,8 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query).map{
+      Datomic.q(query) map {
         case (cname: DString, rname: DRef) => Json.obj(cname.as[String] -> rname.toString)
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -215,9 +210,8 @@ object Application extends Controller {
     val res1 = Datomic.q(query, database, DRef(community.tpe / "twitter"))
     val res2 = Datomic.q(query, database, DRef(community.tpe / "facebook-page"))
     Ok(Json.toJson(
-      (res1 ++ res2).map{
+      (res1 ++ res2) map {
         case (name: DString) => name.as[String]
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -237,9 +231,8 @@ object Application extends Controller {
         query, 
         database, 
         DSet(DString(":community.type/facebook-page"), DString(":community.type/twitter"))
-      ).map{
+      ) map {
           case (cname: DString, tpe: DString) => Json.obj(cname.as[String] -> tpe.as[String])
-          case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -264,9 +257,8 @@ object Application extends Controller {
     )
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString, tpe: DString, orgType: DString) => Json.arr(cname.as[String], tpe.as[String], orgType.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -283,9 +275,8 @@ object Application extends Controller {
     val results = Datomic.q(query)
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -301,9 +292,8 @@ object Application extends Controller {
     val results = Datomic.q(query)
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -322,9 +312,8 @@ object Application extends Controller {
     val results = Datomic.q(query, database, DString(":community.type/website"), DString("food"))
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString, cat: DString) => Json.obj(cname.as[String] -> cat.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -348,9 +337,8 @@ object Application extends Controller {
     val results = Datomic.q(query, database, rule)
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -387,9 +375,8 @@ object Application extends Controller {
     val results2 = Datomic.q(query2, database, rule)
     
     Ok(Json.toJson(
-      (results ++  results2).map{
+      (results ++  results2) map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -434,9 +421,8 @@ object Application extends Controller {
     val results = Datomic.q(query, database, rule)
     
     Ok(Json.toJson(
-      results.map{
+      results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
-        case t => throw new RuntimeException("unexpected type:"+t.getClass)
       }
     ))
   }
@@ -467,26 +453,27 @@ object Application extends Controller {
       val nbWithAfter = Datomic.q(query2, dbAfter).size
       val nbCurrent = Datomic.q(query2, database).size
       Async{
-        Datomic.transact(data).map{ tx =>
+        Datomic.transact(data) map { tx =>
           val nbTransactAfter = Datomic.q(query2, database).size
           val nbSince = Datomic.q(query2, database.since(data_tx_date)).size
 
           Ok(Json.toJson(
             Json.obj(
-              "data" -> data_tx_date.as[Long], 
-              "schema" -> schema_tx_date.as[Long],
-              "nb_schema" -> nbSch,
-              "nb_data" -> nbData,
-              "nb_after_with" -> nbWithAfter,
-              "nb_current" -> nbCurrent,
+              "data"              -> data_tx_date.as[Long],
+              "schema"            -> schema_tx_date.as[Long],
+              "nb_schema"         -> nbSch,
+              "nb_data"           -> nbData,
+              "nb_after_with"     -> nbWithAfter,
+              "nb_current"        -> nbCurrent,
               "nb_transact_after" -> nbTransactAfter,
-              "nb_since" -> nbSince
+              "nb_since"          -> nbSince
             )
-          ))            
+          ))
         }
       }
-    }.getOrElse(BadRequest("Data not valid"))
-
+    } getOrElse {
+      BadRequest("Data not valid")
+    }
   }
 
   def makeNewPartition = Action {
@@ -496,7 +483,7 @@ object Application extends Controller {
     )
 
     Async {
-      Datomic.transact(newPartition).map{ tx =>
+      Datomic.transact(newPartition) map { tx =>
         Ok(Json.obj("tx" -> tx.toString))
       }
     }
@@ -508,7 +495,7 @@ object Application extends Controller {
     )
 
     Async {
-      Datomic.transact(newComm).map{ tx =>
+      Datomic.transact(newComm) map { tx =>
         Ok(Json.obj("tx" -> tx.toString))
       }
     }
@@ -523,7 +510,7 @@ object Application extends Controller {
     
     val op = Fact.add(DId(id))( Namespace("community") / "category" -> "free stuff" )
     Async {
-      Datomic.transact(op).map{ tx =>
+      Datomic.transact(op) map { tx =>
         Ok(Json.obj("tx" -> tx.toString))
       }
     }
@@ -539,7 +526,7 @@ object Application extends Controller {
     
     val op = Entity.retract(id)
     Async {
-      Datomic.transact(op).map{ tx =>
+      Datomic.transact(op) map { tx =>
         Ok(Json.obj("tx" -> tx.toString))
       }
     }
@@ -555,7 +542,7 @@ object Application extends Controller {
     val txReportQueue = conn.txReportQueue
 
     Async{
-      Datomic.transact(newComm).map{ tx =>
+      Datomic.transact(newComm) map { tx =>
         play.Logger.info("hello")
         //val report = conn.connection.txReportQueue.poll()
         txReportQueue.stream.head match {
@@ -572,9 +559,12 @@ object Application extends Controller {
               ]
             """)
 
-            Ok(Datomic.q(query, report.dbAfter, new DSet(report.txData.toSet)).collect{
-              case (e, aname, v, added) => Json.arr(e.toString, aname.toString, v.toString, added.toString)
-            }.foldLeft(Json.arr())( (acc, e) => acc :+ e))
+            Ok {
+              Datomic.q(query, report.dbAfter, new DSet(report.txData.toSet)).map{
+                case (e, aname, v, added) =>
+                  Json.arr(e.toString, aname.toString, v.toString, added.toString)
+              }.foldLeft(Json.arr())( (acc, e) => acc :+ e)
+            }
         }
         
       }

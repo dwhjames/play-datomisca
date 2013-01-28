@@ -39,28 +39,29 @@ object Application extends Controller {
         Entity.add(dogId)(
           Dog.dog / "name" -> name
         )
-      ).map{ tx =>
+      ) map { tx =>
         // resolves real ID
-        tx.resolve(dogId).map{ realid: DLong =>
+        tx.resolve(dogId) map { realid: DLong =>
           Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid.underlying)))
-        }.getOrElse(
+        } getOrElse {
           BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> "unable to resolve Id")))
-        )
+        }
       }
     }
   }
 
   def getDog(id: Long) = Action {
-    database.entityOpt(DLong(id)).map{ entity =>
+    Try {
+      val entity = database.entity(id)
       Ok(Json.obj(
         "result" -> "OK", 
         "dog" -> Json.obj(
           "name" -> entity.getAs[String](Dog.dog / "name")
         )
       ))
-    }.getOrElse(
+    } getOrElse {
       BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unable to resolve enttiy with id:$id")))
-    )
+    }
   }
 
   val queryDogByName = Query("""
@@ -72,51 +73,53 @@ object Application extends Controller {
     val json = request.body
 
     json.validate(
-      (__ \ 'name).read[String] and
-      (__ \ 'age).read[Long] and
-      (__ \ 'dog).read[String] and
+      (__ \ 'name)      .read[String] and
+      (__ \ 'age)       .read[Long]   and
+      (__ \ 'dog)       .read[String] and
       (__ \ 'characters).read[Set[String]]
       tupled
-    ).map {
+    ) map {
       case (name, age, dogName, characters) =>
-        Datomic.q(queryDogByName, database, DString(dogName)).headOption.collect{ 
+        Datomic.q(queryDogByName, database, DString(dogName)).headOption map {
           case dogId: DLong =>
             val personId = DId(Common.MY_PART)
             Async {
               Datomic.transact(
                 Entity.add(personId)(
-                  Person.person / "name" -> name,
-                  Person.person / "age" -> age,
-                  Person.person / "dog" -> DRef(DId(dogId)),
-                  Person.person / "characters" -> characters.map{ ch => DRef( Person.person.characters / ch ) } 
+                  Person.person / "name"       -> name,
+                  Person.person / "age"        -> age,
+                  Person.person / "dog"        -> DRef(DId(dogId)),
+                  Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
                 )
-              ).map{ tx => 
-                tx.resolve(personId).map{ realId =>
+              ) map { tx =>
+                tx.resolve(personId) map { realId =>
                   Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))
-                }.getOrElse(
+                } getOrElse {
                   BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unable to resolve person entity with id:$personId")))
-                )
+                }
               }
             }
-        }.getOrElse(
+        } getOrElse {
           BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Dog with name $dogName not found")))
-        )
+        }
       case _ => BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unexpected result")))
-    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    } recoverTotal { errors =>
+      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+    }
   }
 
   def getPerson(id: Long) = Action {
-    database.entityOpt(id).map{ entity =>
-      println("dog:"+ entity.tryGetAs[DEntity](Person.person / "dog").get.toMap)
-      println("dogName:"+entity.tryGetAs[DEntity](Person.person / "dog").get.tryGetAs[String](Dog.dog / "name"))
-      println("chars:"+entity.tryGetAs[Set[String]](Person.person / "characters"))
-      (for{
-          name <- entity.tryGetAs[String](Person.person / "name")
-          age <- entity.tryGetAs[Long](Person.person / "age")
-          dog <- entity.tryGetAs[DEntity](Person.person / "dog")
-          dogName <- dog.tryGetAs[String](Dog.dog / "name")
-          characters <- entity.tryGetAs[Set[DRef]](Person.person / "characters").map(_.map(_.toString))
-      } yield( Ok(Json.obj(
+    try {
+      val entity = database.entity(id)
+      println("dog:"+ entity(Person.person / "dog").as[DEntity].toMap)
+      println("dogName:"+entity.as[DEntity](Person.person / "dog").as[String](Dog.dog / "name"))
+      println("chars:"+entity(Person.person / "characters").as[Set[String]])
+      val name = entity(Person.person / "name").as[String]
+      val age  = entity(Person.person / "age").as[Long]
+      val dog  = entity(Person.person / "dog").as[DEntity]
+      val dogName = dog(Dog.dog / "name").as[String]
+      val characters = entity(Person.person / "characters").as[Set[DRef]].map(_.toString)
+      Ok(Json.obj(
         "result" -> "OK", 
         "dog" -> Json.obj(
           "name" -> name,
@@ -124,11 +127,11 @@ object Application extends Controller {
           "dog" -> dogName,
           "characters" -> Json.toJson(characters)
         )))
-      )).getOrElse(
+    } catch {
+      case e: EntityNotFoundException =>
+        BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found")))
+      case e: Throwable =>
         BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person entity not mappable")))
-      )
-    }.getOrElse{
-      BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found")))
     }
   }
 
@@ -142,26 +145,28 @@ object Application extends Controller {
       (__ \ 'dog).readNullable[String] and
       (__ \ 'characters).readNullable[Set[String]]
       tupled
-    ).map{
+    ) map {
       case (name: Option[String], age: Option[Long], dogName: Option[String], characters: Option[_]) =>
         val builder = Map.newBuilder[Keyword, DatomicData]
-        name.foreach( name => builder += (Person.person / "name" -> DString(name)) )
-        age.foreach( age => builder += (Person.person / "age" -> DLong(age)) )
-        dogName.foreach{ dogName =>
+        name foreach { name => builder += (Person.person / "name" -> DString(name)) }
+        age  foreach { age  => builder += (Person.person / "age"  -> DLong(age)) }
+        dogName foreach { dogName =>
           Datomic.q(queryDogByName, database, DString(dogName)).headOption.foreach{ 
             case dogid: DLong => builder += (Person.person / "dog" -> DRef(DId(dogid)))
             case _ =>
           }
         }
-        characters.foreach{ characters =>
+        characters foreach { characters =>
           builder += (Person.person / "characters" -> new DSet(characters.map( ch => DRef(Person.person.characters / ch)) ))
         }
         
-        Async{
-          Datomic.transact(Entity.add(DId(id), builder.result)).map{ tx =>
+        Async {
+          Datomic.transact(Entity.add(DId(id), builder.result)) map { tx =>
             Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
           }
         }
-    }.recoverTotal{ errors => BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )) }
+    } recoverTotal { errors =>
+      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+    }
   }
 }

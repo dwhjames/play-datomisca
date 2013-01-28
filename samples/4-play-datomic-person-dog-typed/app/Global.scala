@@ -26,7 +26,7 @@ object Global extends GlobalSettings {
       Seq(Fact.partition(Common.MY_PART)) ++ 
       Dog.schema ++ 
       Person.schema
-    ).map{ tx =>
+    ) map { tx =>
       println("bootstrapped schema")
     }
     

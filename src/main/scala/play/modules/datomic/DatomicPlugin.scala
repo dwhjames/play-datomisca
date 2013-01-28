@@ -55,7 +55,7 @@ class DatomicPlugin(app: Application) extends Plugin {
     Logger.info("DatomicPlugin starting...")
     Logger.info(
       "DatomicPlugin successfully started with uris :\n%s".format(
-        conf.map{ case(k, v) => s"  $k : $v" }.mkString("{\n", "\n", "\n}")
+        conf map { case(k, v) => s"  $k : $v" } mkString ("{\n", "\n", "\n}")
       )
     )
   }
@@ -94,7 +94,7 @@ object DatomicPlugin {
   private def parseConf(app: Application): Map[String, String] = {
     import scala.collection.JavaConversions._
     app.configuration.getObject("datomiska.uri") match {
-      case Some(obj) => obj.toMap.map{ case(k, v) => k -> v.unwrapped.toString }
+      case Some(obj) => obj.toMap map { case(k, v) => k -> v.unwrapped.toString }
       case None =>  throw app.configuration.globalError("Missing configuration key 'datomic.uri' (should be a list of servers)!")
     }
   }

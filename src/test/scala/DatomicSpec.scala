@@ -47,15 +47,15 @@ class DatomicSpec extends Specification {
         }
 
         val violent = AddIdent(person.character / "violent")
-        val weak = AddIdent(person.character / "weak")
-        val clever = AddIdent(person.character / "clever")
-        val dumb = AddIdent(person.character / "dumb")
-        val stupid = AddIdent(person.character / "stupid")
+        val weak    = AddIdent(person.character / "weak")
+        val clever  = AddIdent(person.character / "clever")
+        val dumb    = AddIdent(person.character / "dumb")
+        val stupid  = AddIdent(person.character / "stupid")
 
         val schema = Seq(
-          Attribute( person / "name", SchemaType.string, Cardinality.one).withDoc("Person's name"),
-          Attribute( person / "age", SchemaType.long, Cardinality.one).withDoc("Person's age"),
-          Attribute( person / "character", SchemaType.ref, Cardinality.many).withDoc("Person's characterS"),
+          Attribute(person / "name",      SchemaType.string, Cardinality.one) .withDoc("Person's name"),
+          Attribute(person / "age",       SchemaType.long,   Cardinality.one) .withDoc("Person's age"),
+          Attribute(person / "character", SchemaType.ref,    Cardinality.many).withDoc("Person's characterS"),
           violent,
           weak,
           clever,
@@ -66,37 +66,36 @@ class DatomicSpec extends Specification {
         //implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
         import ExecutionContext.Implicits.global
 
-        val fut = Datomic.transact(schema).flatMap{ tx =>
+        val fut = Datomic.transact(schema) flatMap { tx =>
           println("Created schema")
           Datomic.transact(
-            Datomic.addEntity(DId(Partition.USER))(
+            Entity.add(DId(Partition.USER))(
               person / "name" -> "toto",
               person / "age" -> 30
             ),
-            Datomic.addEntity(DId(Partition.USER))(
+            Entity.add(DId(Partition.USER))(
               person / "name" -> "tutu",
               person / "age" -> 54
             ),
-            Datomic.addEntity(DId(Partition.USER))(
+            Entity.add(DId(Partition.USER))(
               person / "name" -> "tata",
               person / "age" -> 23
             )
-          ).map{ tx => 
+          ) map { tx =>
             //println("Inserted data... tx:"+tx)
-            Datomic.query[Args2, Args3]("""
-            [ 
-              :find ?e ?name ?a
-              :in $ ?age
-              :where [ ?e :person/name ?name ] 
-                     [ ?e :person/age ?a ]
-                     [ (< ?a ?age) ]
-            ]
-            """).all().execute(database, DLong(45L)).map( results =>
-              println("results:"+results)
-            ).recover{ case e => Future.failed(e) }.get
+            val query = Query("""
+              [
+                :find ?e ?name ?a
+                :in $ ?age
+                :where [ ?e :person/name ?name ]
+                       [ ?e :person/age ?a ]
+                       [ (< ?a ?age) ]
+              ]
+            """)
+
+            val results = Datomic.q(query, database, DLong(45L))
+            println("results:"+results)
           }
-        }.recover{
-          case e => failure("Exception:"+e.getMessage)
         }
 
         Await.result(
