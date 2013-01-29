@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package play.modules.datomic
+package play.modules.datomisca
 
 import play.api._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-import reactivedatomic.{Datomic, Connection}
+import datomisca.{Datomic, Connection}
 import scala.util.{Try, Success, Failure}
 
 
@@ -93,9 +93,9 @@ object DatomicPlugin {
 
   private def parseConf(app: Application): Map[String, String] = {
     import scala.collection.JavaConversions._
-    app.configuration.getObject("datomiska.uri") match {
+    app.configuration.getObject("datomisca.uri") match {
       case Some(obj) => obj.toMap map { case(k, v) => k -> v.unwrapped.toString }
-      case None =>  throw app.configuration.globalError("Missing configuration key 'datomic.uri' (should be a list of servers)!")
+      case None =>  throw app.configuration.globalError("Missing configuration key 'datomisca.uri' (should be a list of servers)!")
     }
   }
 }

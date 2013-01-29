@@ -11,10 +11,10 @@ import scala.concurrent.duration.Duration
 import scala.util.{Try, Success, Failure}
 import scala.io.Source
 
-import reactivedatomic._
+import datomisca._
 import Datomic._ 
 
-import play.modules.datomic._
+import play.modules.datomisca._
 
 import play.api.libs.json._
 import play.api.libs.json.Json

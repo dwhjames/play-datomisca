@@ -15,12 +15,12 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.json.Writes._
 
-import reactivedatomic._
+import datomisca._
 import Datomic._ 
 import DatomicMapping._ 
 
-import play.modules.datomic._
-import play.modules.datomic.Implicits._
+import play.modules.datomisca._
+import Implicits._
 
 import models._
 

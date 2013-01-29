@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit._
 import scala.concurrent.duration.Duration
 import scala.util.{Try, Success, Failure}
 
-import reactivedatomic._
+import datomisca._
 import Datomic._
-import play.modules.datomic._
+import play.modules.datomisca._
 
 object Application extends Controller {
   def index = Action { Async {

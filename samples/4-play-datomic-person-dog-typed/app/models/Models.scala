@@ -3,13 +3,13 @@ package models
 import scala.util.{Try, Success, Failure}
 import scala.concurrent.{Future, ExecutionContext}
 
-import reactivedatomic._
+import datomisca._
 import Datomic._
 import DatomicMapping._
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.modules.datomic.Implicits._
+import play.modules.datomisca.Implicits._
 import play.api.data.validation.ValidationError
 
 object Common {

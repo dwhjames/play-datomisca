@@ -13,9 +13,9 @@ import play.api.Play.current
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import reactivedatomic.Datomic._ 
-import reactivedatomic._
-import play.modules.datomic._
+import datomisca._
+import Datomic._ 
+import play.modules.datomisca._
 
 import models._
 

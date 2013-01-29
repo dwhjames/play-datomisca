@@ -1,7 +1,7 @@
 import play.api._
 
-import play.modules.datomic._
-import reactivedatomic._
+import play.modules.datomisca._
+import datomisca._
 
 import scala.concurrent._
 import scala.concurrent.util._

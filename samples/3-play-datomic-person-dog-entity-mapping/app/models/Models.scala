@@ -3,7 +3,7 @@ package models
 import scala.util.{Try, Success, Failure}
 import scala.concurrent.{Future, ExecutionContext}
 
-import reactivedatomic._
+import datomisca._
 import Datomic._
 import DatomicMapping._
 

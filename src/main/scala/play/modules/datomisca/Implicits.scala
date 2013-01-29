@@ -1,12 +1,11 @@
-package play.modules.datomic
+package play.modules.datomisca
 
-import reactivedatomic._
+import datomisca._
 import play.api.libs.json._
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.{Monoid, Reducer}
 
 object Implicits {
-  
 
   implicit lazy val DD2Json: Writes[DatomicData] = Writes[DatomicData]( dd => dd match {
     case DString(s) => JsString(s)
