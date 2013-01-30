@@ -63,11 +63,9 @@ object Implicits {
     def apply[DD <: DatomicData, Card <: Cardinality](attr: Attribute[DD, Card])
       (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
       Reads[PartialAddEntity]{ js => 
-        //(__ \ attr.ident.name).asSingleJsResult(js) flatMap { jsv =>
           js.validate[T](jsReads) map { t =>
             ac.convert(attr).write(t)
           }
-        //}
       }
     }
   }
@@ -76,11 +74,9 @@ object Implicits {
     def apply[DD <: DatomicData, Card <: Cardinality](attr: Attribute[DD, Card])
       (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) = {
       Reads[PartialAddEntity]{ js => 
-        //(__ \ attr.ident.toString).asSingleJsResult(js) flatMap { jsv =>
           js.validate[T](jsReads) map { t =>
             ac.convert(attr).write(t)
           }
-        //}
       }
     }
   }
