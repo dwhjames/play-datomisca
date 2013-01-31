@@ -40,7 +40,14 @@ object ApplicationBuild extends Build {
         "play" %% "play-test" % BuildSettings.playVersion % "test",
         "org.specs2" % "specs2_2.10.0-RC1" % "1.12.2" % "test",
         "junit" % "junit" % "4.8" % "test"
-      )
+      ),
+      publishMavenStyle := true,
+      publishTo <<= version { (version: String) =>
+        val localPublishRepo = "../datomisca-repo/"
+        if(version.trim.endsWith("SNAPSHOT"))
+          Some(Resolver.file("snapshots", new File(localPublishRepo + "/snapshots")))
+        else Some(Resolver.file("releases", new File(localPublishRepo + "/releases")))
+      }
     )
   )/*.dependsOn(datomicDriver).aggregate(datomicDriver)*/
 
