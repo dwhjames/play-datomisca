@@ -46,11 +46,8 @@ object Application extends Controller {
         ))
       ) map { tx =>
         // resolves real ID
-        tx.resolve(dogId) map { realid: DLong =>
-          Ok(Json.obj("result" -> "OK", "id" -> realid.underlying))
-        } getOrElse {
-          BadRequest(Json.obj("result" -> "KO", "error" -> "unable to resolve Id"))
-        }
+        val realid = tx.resolve(dogId)
+        Ok(Json.obj("result" -> "OK", "id" -> realid.underlying))        
       }
     }
   }
@@ -75,11 +72,8 @@ object Application extends Controller {
       val personId = DId(Common.MY_PART)
       Async {
         Datomic.transact( Entity.add(personId, partialEntity) ) map { tx =>
-          tx.resolve(personId) map { realId =>
-            Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))
-          } getOrElse {
-            BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> "unable to resolve inserted person entity")))
-          }
+          val realId = tx.resolve(personId)
+          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))          
         }
       }
     } recoverTotal { e =>

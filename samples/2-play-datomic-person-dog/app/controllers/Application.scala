@@ -41,11 +41,8 @@ object Application extends Controller {
         )
       ) map { tx =>
         // resolves real ID
-        tx.resolve(dogId) map { realid: DLong =>
-          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid.underlying)))
-        } getOrElse {
-          BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> "unable to resolve Id")))
-        }
+        val realId = tx.resolve(dogId)
+        Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.underlying)))
       }
     }
   }
@@ -92,11 +89,8 @@ object Application extends Controller {
                   Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
                 )
               ) map { tx =>
-                tx.resolve(personId) map { realId =>
-                  Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))
-                } getOrElse {
-                  BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unable to resolve person entity with id:$personId")))
-                }
+                val realId = tx.resolve(personId)
+                Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))                
               }
             }
         } getOrElse {
