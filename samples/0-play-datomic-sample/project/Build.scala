@@ -8,7 +8,7 @@ object ApplicationBuild extends Build {
     val appName           = "play-datomisca-sample"
     val appVersion        = "1.0-SNAPSHOT"
     val datomicVersion    = "0.8.3814"
-    val datomiscaVersion  = "0.1"
+    val datomiscaVersion  = "0.2-SNAPSHOT"
 
     val appDependencies = Seq(
       "play.modules.datomisca" %% "play-datomisca" % datomiscaVersion,

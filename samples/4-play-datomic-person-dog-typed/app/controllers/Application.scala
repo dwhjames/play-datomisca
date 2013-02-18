@@ -46,8 +46,8 @@ object Application extends Controller {
         ))
       ) map { tx =>
         // resolves real ID
-        val Some(realid) = tx.resolve(dogId)
-        Ok(Json.obj("result" -> "OK", "id" -> realid.underlying))        
+        val realid = tx.resolve(dogId)
+        Ok(Json.obj("result" -> "OK", "id" -> realid))        
       }
     }
   }
@@ -72,8 +72,8 @@ object Application extends Controller {
       val personId = DId(Common.MY_PART)
       Async {
         Datomic.transact( Entity.add(personId, partialEntity) ) map { tx =>
-          val Some(realId) = tx.resolve(personId)
-          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))          
+          val realId = tx.resolve(personId)
+          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId)))          
         }
       }
     } recoverTotal { e =>

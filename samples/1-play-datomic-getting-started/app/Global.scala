@@ -36,7 +36,7 @@ object Global extends GlobalSettings {
 
         data map { data =>
           Datomic.transact(data) map { tx =>
-            play.Logger.info("bootstrapped data with %d entities".format(tx.tempids.size))
+            play.Logger.info("bootstrapped data")
           }
         } get
       }
