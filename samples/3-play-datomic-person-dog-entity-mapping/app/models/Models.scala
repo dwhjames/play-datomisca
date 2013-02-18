@@ -45,7 +45,7 @@ object Dog {
     val entity = DatomicMapping.toEntity(tempid)(dog)
 
     Datomic.transact(DatomicMapping.toEntity(tempid)(dog)) flatMap { tx =>
-      val realId = tx.resolve(tempid)
+      val Some(realId) = tx.resolve(tempid)
       Future.successful(realId.as[Long])      
     }
   }
@@ -154,7 +154,7 @@ object Person {
     val entity = DatomicMapping.toEntity(tempid)(person)
 
     Datomic.transact(DatomicMapping.toEntity(tempid)(person)) flatMap { tx =>
-      val realid = tx.resolve(tempid)
+      val Some(realid) = tx.resolve(tempid)
       Future.successful(realid.as[Long])      
     }
   }

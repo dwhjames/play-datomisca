@@ -3,13 +3,14 @@ import Keys._
 
 object BuildSettings {
   val buildOrganization = "play.modules.datomisca"
-  val buildName = "play-datomisca"
-  val buildVersion      = "0.1-SNAPSHOT"
+  val buildName         = "play-datomisca"
+  val buildVersion      = "0.1"
   val buildScalaVersion = "2.10.0"
 
-  val datomicVersion    = "0.8.3731"
+  val datomiscaVersion  = "0.1" 
+  val datomicVersion    = "0.8.3814"
 
-  val playVersion  = "2.1-RC2"
+  val playVersion       = "2.1.0"
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := buildOrganization,
@@ -21,7 +22,9 @@ object BuildSettings {
 object ApplicationBuild extends Build {
   val typesafeRepo = Seq(
     "Typesafe repository snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
-    "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/"
+    "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/",
+    "datomisca-repo snapshots" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/snapshots",    
+    "datomisca-repo releases" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/releases"   
   )
 
   //lazy val datomicDriver = RootProject(uri("https://github.com/pellucidanalytics/datomic.git#master"))
@@ -33,12 +36,12 @@ object ApplicationBuild extends Build {
       resolvers ++= typesafeRepo,
       libraryDependencies ++= Seq(
         "play" %% "play" % BuildSettings.playVersion,
-        "pellucidanalytics" %% "datomisca" % "0.1-SNAPSHOT",
+        "pellucidanalytics" %% "datomisca" % BuildSettings.datomiscaVersion,
         "com.datomic" % "datomic-free" % BuildSettings.datomicVersion % "provided" 
           exclude("org.slf4j", "slf4j-nop")
           exclude("org.jboss.netty", "netty"),
         "play" %% "play-test" % BuildSettings.playVersion % "test",
-        "org.specs2" % "specs2_2.10.0-RC1" % "1.12.2" % "test",
+        "org.specs2" %% "specs2" % "1.12.3" % "test",
         "junit" % "junit" % "4.8" % "test"
       ),
       publishMavenStyle := true,

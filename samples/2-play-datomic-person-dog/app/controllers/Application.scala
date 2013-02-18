@@ -41,7 +41,7 @@ object Application extends Controller {
         )
       ) map { tx =>
         // resolves real ID
-        val realId = tx.resolve(dogId)
+        val Some(realId) = tx.resolve(dogId)
         Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.underlying)))
       }
     }
@@ -89,7 +89,7 @@ object Application extends Controller {
                   Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
                 )
               ) map { tx =>
-                val realId = tx.resolve(personId)
+                val Some(realId) = tx.resolve(personId)
                 Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId.as[Long])))                
               }
             }
