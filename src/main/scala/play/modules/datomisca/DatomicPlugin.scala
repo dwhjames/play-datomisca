@@ -55,7 +55,15 @@ class DatomicPlugin(app: Application) extends Plugin {
     Logger.info("DatomicPlugin starting...")
     Logger.info(
       "DatomicPlugin successfully started with uris :\n%s".format(
-        conf map { case(k, v) => s"  $k : $v" } mkString ("{\n", "\n", "\n}")
+        conf map { case (k, v) =>
+          assert {
+            v startsWith "datomic:"
+          }
+          val uri = new java.net.URI(v drop 8)
+          s"""|  config key:      $k
+              |  storage service: ${uri.getScheme}
+              |  db URI path:     ${uri.getAuthority}${uri.getPath}""".stripMargin
+        } mkString ("{\n", "\n", "\n}")
       )
     )
   }
