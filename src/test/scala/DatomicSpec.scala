@@ -5,13 +5,10 @@ import org.specs2.runner.JUnitRunner
 import play.api.test._
 import play.api.test.Helpers._
 
-import play.modules.datomic._
-import reactivedatomic._
-import Datomic._
+import play.modules.datomisca._
+import datomisca._
 
 import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
 import scala.concurrent.duration.Duration
 
 @RunWith(classOf[JUnitRunner])
@@ -23,10 +20,10 @@ class DatomicSpec extends Specification {
       Utils.running(FakeApplicationWithConf(
         additionalConfiguration = 
           com.typesafe.config.ConfigFactory.parseMap(Map(
-            "datomiska.uri.mem" -> "datomic:mem://mem",
-            "datomiska.uri.mem2" -> "datomic:mem://mem2"
+            "datomisca.uri.mem" -> "datomic:mem://mem",
+            "datomisca.uri.mem2" -> "datomic:mem://mem2"
           ).asJava),
-        additionalPlugins = Seq("play.modules.datomic.DatomicPlugin")
+        additionalPlugins = Seq("play.modules.datomisca.DatomicPlugin")
       )){
         import play.api.Play.current
 
@@ -93,7 +90,7 @@ class DatomicSpec extends Specification {
               ]
             """)
 
-            val results = Datomic.q(query, database, DLong(45L))
+            val results = Datomic.q(query, Datomic.database, DLong(45L))
             println("results:"+results)
           }
         }

@@ -4,12 +4,12 @@ import Keys._
 object BuildSettings {
   val buildOrganization = "play.modules.datomisca"
   val buildName         = "play-datomisca"
-  val buildVersion      = "0.3-SNAPSHOT"
+  val buildVersion      = "0.5"
   val buildScalaVersion = "2.10.2"
 
-  val datomiscaVersion  = "0.3-SNAPSHOT"
-  val datomicVersion    = "0.8.4007"
-  val playVersion       = "2.1.1"
+  val datomiscaVersion  = "0.5"
+  val datomicVersion    = "0.8.4020.26"
+  val playVersion       = "2.1.2"
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := buildOrganization,
@@ -40,7 +40,7 @@ object ApplicationBuild extends Build {
           exclude("org.slf4j", "slf4j-nop")
           exclude("org.jboss.netty", "netty"),
         "play" %% "play-test" % BuildSettings.playVersion % "test",
-        "org.specs2" %% "specs2" % "1.12.3" % "test",
+        "org.specs2" %% "specs2" % "2.0" % "test",
         "junit" % "junit" % "4.8" % "test"
       ),
       publishMavenStyle := true,
