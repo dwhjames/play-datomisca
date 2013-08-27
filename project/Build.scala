@@ -1,78 +1,113 @@
+
+import scala.language.postfixOps
+
 import sbt._
 import Keys._
 
-object BuildSettings {
-  val buildOrganization = "play.modules.datomisca"
-  val buildName         = "play-datomisca"
-  val buildVersion      = "0.5"
-  val buildScalaVersion = "2.10.2"
 
-  val datomiscaVersion  = "0.5"
-  val datomicVersion    = "0.8.4020.26"
-  val playVersion       = "2.1.2"
+object PlayDatomiscaBuild extends Build {
 
-  val buildSettings = Defaults.defaultSettings ++ Seq (
-    organization := buildOrganization,
-    version      := buildVersion,
-    scalaVersion := buildScalaVersion
+  lazy val buildSettings = Defaults.defaultSettings ++ Seq (
+    organization  :=  "com.pellucid",
+    version       :=  "0.5.1",
+    scalaVersion  :=  "2.10.2",
+    scalacOptions ++= Seq(
+        "-deprecation",
+        "-feature",
+        "-unchecked"
+      )
   )
-}
-
-object ApplicationBuild extends Build {
-  val typesafeRepo = Seq(
-    "Typesafe repository snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
-    "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/",
-    "datomisca-repo snapshots" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/snapshots",    
-    "datomisca-repo releases" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/releases"   
-  )
-
-  //lazy val datomicDriver = RootProject(uri("https://github.com/pellucidanalytics/datomic.git#master"))
 
   lazy val playDatomic = Project(
-    BuildSettings.buildName, file("."),
-    settings = BuildSettings.buildSettings ++ Defaults.defaultSettings ++ Seq(
-      shellPrompt := ShellPrompt.buildShellPrompt,
-      resolvers ++= typesafeRepo,
-      libraryDependencies ++= Seq(
-        "play" %% "play" % BuildSettings.playVersion,
-        "pellucidanalytics" %% "datomisca" % BuildSettings.datomiscaVersion,
-        "com.datomic" % "datomic-free" % BuildSettings.datomicVersion % "provided" 
-          exclude("org.slf4j", "slf4j-nop")
-          exclude("org.jboss.netty", "netty"),
-        "play" %% "play-test" % BuildSettings.playVersion % "test",
-        "org.specs2" %% "specs2" % "2.0" % "test",
-        "junit" % "junit" % "4.8" % "test"
-      ),
-      publishMavenStyle := true,
-      publishTo <<= version { (version: String) =>
-        val localPublishRepo = "../datomisca-repo/"
-        if(version.trim.endsWith("SNAPSHOT"))
-          Some(Resolver.file("snapshots", new File(localPublishRepo + "/snapshots")))
-        else Some(Resolver.file("releases", new File(localPublishRepo + "/releases")))
-      }
+    id       = "play-datomisca",
+    base     = file("."),
+    settings = playDatomicsaSettings
+  )
+
+  val typesafeRepo = Seq(
+    "Typesafe repository releases"  at "http://repo.typesafe.com/typesafe/releases/"
+  )
+
+  val pellucidRepo = Seq(
+    "Pellucid Bintray" at "http://dl.bintray.com/content/pellucid/maven"
+  )
+
+  lazy val playDatomicsaSettings =
+    buildSettings ++
+    bintray.Plugin.bintraySettings ++
+    Seq(
+      name        := "play-datomisca",
+      shellPrompt := CustomShellPrompt.customPrompt,
+
+      resolvers           ++= typesafeRepo ++ pellucidRepo,
+      libraryDependencies ++= Dependencies.playDatomicsa,
+
+      licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+      bintray.Keys.bintrayOrganization in bintray.Keys.bintray := Some("pellucid")
     )
-  )/*.dependsOn(datomicDriver).aggregate(datomicDriver)*/
 
-  object ShellPrompt {
-    object devnull extends ProcessLogger {
-      def info (s: => String) {}
-      def error (s: => String) { }
-      def buffer[T] (f: => T): T = f
+}
+
+object Dependencies {
+
+  object V {
+    // compile
+    val datomic      = "0.8.4020.26"
+    val datomisca    = "0.5.1"
+    val play         = "2.1.3"
+
+    // test
+    val junit     = "4.8"
+    val specs2    = "2.0"
+  }
+
+  object Compile {
+    val datomic      = "com.datomic"     %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
+
+    val datomisca    = "com.pellucid"    %% "datomisca"       % V.datomisca
+
+    val play         = "play"            %% "play"            % V.play       % "provided"
+  }
+  import Compile._
+
+  object Test {
+    val playTest    = "play"          %% "play-test"    % V.play      % "test"
+    val specs2      = "org.specs2"    %% "specs2"       % V.specs2    % "test"
+    val junit       = "junit"         %  "junit"        % V.junit     % "test"
+  }
+  import Test._
+
+  val playDatomicsa =
+    Seq(
+      // compile
+      datomic, datomisca, play,
+      // test
+      playTest, specs2, junit
+    )
+}
+
+object CustomShellPrompt {
+
+  val Branch = """refs/heads/(.*)\s""".r
+
+  def gitBranchOrSha =
+    Process("git symbolic-ref HEAD") #|| Process("git rev-parse --short HEAD") !! match {
+      case Branch(name) => name
+      case sha          => sha.stripLineEnd
     }
 
-    val current = """\*\s+([\w-]+)""".r
+  val customPrompt = { state: State =>
 
-    def gitBranches = ("git branch --no-color" lines_! devnull mkString)
+    val extracted = Project.extract(state)
+    import extracted._
 
-    val buildShellPrompt = {
-      (state: State) => {
-        val currBranch =
-          current findFirstMatchIn gitBranches map (_ group(1)) getOrElse "-"
-        val currProject = Project.extract (state).currentProject.id
-        "%s:%s> ".format (
-          currProject, currBranch
-        )
-      }
-    }
+    (name in currentRef get structure.data) map { name =>
+      "[" + scala.Console.CYAN + name + scala.Console.RESET + "] " +
+      scala.Console.BLUE + "git:(" +
+      scala.Console.RED + gitBranchOrSha +
+      scala.Console.BLUE + ")" +
+      scala.Console.RESET + " $ "
+    } getOrElse ("> ")
+
   }
 }
