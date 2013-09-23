@@ -35,6 +35,7 @@ object PlayDatomiscaBuild extends Build {
   lazy val playDatomicsaSettings =
     buildSettings ++
     bintray.Plugin.bintraySettings ++
+    //Publish.settings ++
     Seq(
       name        := "play-datomisca",
       shellPrompt := CustomShellPrompt.customPrompt,
@@ -62,18 +63,16 @@ object Dependencies {
   }
 
   object Compile {
-    val datomic      = "com.datomic"          %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
-
-    val datomisca    = "com.pellucid"         %% "datomisca"       % V.datomisca
-
-    val play         = "com.typesafe.play"    %% "play"            % V.play       % "provided"
+    val datomic      = "com.datomic"       %  "datomic-pro"     % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
+    val datomisca    = "com.pellucid"      %% "datomisca"       % V.datomisca
+    val play         = "com.typesafe.play" %% "play"            % V.play       % "provided"
   }
   import Compile._
 
   object Test {
-    val playTest    = "com.typesafe.play"    %% "play-test"    % V.play      % "test"
-    val specs2      = "org.specs2"           %% "specs2"       % V.specs2    % "test"
-    val junit       = "junit"                %  "junit"        % V.junit     % "test"
+    val playTest    = "com.typesafe.play"  %% "play-test"    % V.play      % "test"
+    val specs2      = "org.specs2"         %% "specs2"       % V.specs2    % "test"
+    val junit       = "junit"              %  "junit"        % V.junit     % "test"
   }
   import Test._
 
@@ -111,3 +110,18 @@ object CustomShellPrompt {
 
   }
 }
+
+/*object Publish {
+
+  lazy val settings = Seq(
+    publishMavenStyle := true,
+    publishTo <<= version { v: String =>
+      val localPublishRepo = "../datomisca-repo/"
+      if (v.trim endsWith "SNAPSHOT")
+        Some(Resolver.file("snapshots", new File(localPublishRepo + "/snapshots")))
+      else
+        Some(Resolver.file("releases",  new File(localPublishRepo + "/releases")))
+    }
+  )
+
+}*/
