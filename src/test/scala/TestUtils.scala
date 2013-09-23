@@ -28,7 +28,6 @@ object Utils {
         block
       } finally {
         Play.stop()
-        play.api.libs.ws.WS.resetClient()
       }
     }
   }

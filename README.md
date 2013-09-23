@@ -1,4 +1,4 @@
-# [Play Datomisca](http://pellucidanalytics.github.com/datomisca), Play! Framework 2.1 module for [Datomic](http://www.datomic.com)
+# [Play Datomisca](http://pellucidanalytics.github.com/datomisca), Play! Framework 2.2 module for [Datomic](http://www.datomic.com)
 
 [Datomisca](http://pellucidanalytics.github.com/datomisca) is a Scala driver for [Datomic](http://www.datomic.com)
 

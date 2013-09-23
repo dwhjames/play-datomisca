@@ -9,7 +9,7 @@ object PlayDatomiscaBuild extends Build {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  :=  "com.pellucid",
-    version       :=  "0.5.1",
+    version       :=  "0.5.2",
     scalaVersion  :=  "2.10.2",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -54,7 +54,7 @@ object Dependencies {
     // compile
     val datomic      = "0.8.4020.26"
     val datomisca    = "0.5.1"
-    val play         = "2.1.3"
+    val play         = "2.2.0"
 
     // test
     val junit     = "4.8"
@@ -62,18 +62,18 @@ object Dependencies {
   }
 
   object Compile {
-    val datomic      = "com.datomic"     %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
+    val datomic      = "com.datomic"          %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
 
-    val datomisca    = "com.pellucid"    %% "datomisca"       % V.datomisca
+    val datomisca    = "com.pellucid"         %% "datomisca"       % V.datomisca
 
-    val play         = "play"            %% "play"            % V.play       % "provided"
+    val play         = "com.typesafe.play"    %% "play"            % V.play       % "provided"
   }
   import Compile._
 
   object Test {
-    val playTest    = "play"          %% "play-test"    % V.play      % "test"
-    val specs2      = "org.specs2"    %% "specs2"       % V.specs2    % "test"
-    val junit       = "junit"         %  "junit"        % V.junit     % "test"
+    val playTest    = "com.typesafe.play"    %% "play-test"    % V.play      % "test"
+    val specs2      = "org.specs2"           %% "specs2"       % V.specs2    % "test"
+    val junit       = "junit"                %  "junit"        % V.junit     % "test"
   }
   import Test._
 
