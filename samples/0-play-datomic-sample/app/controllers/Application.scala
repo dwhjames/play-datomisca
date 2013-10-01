@@ -39,7 +39,7 @@ object Application extends Controller {
         person / "age" -> 23
       )
     ) map { tx =>
-      val query = Query.manual[Args2, Args3]("""
+      val query = Query("""
       [ 
         :find ?e ?name ?a
         :in $ ?age

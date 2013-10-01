@@ -5,13 +5,13 @@ import play.Project._
 
 object ApplicationBuild extends Build {
 
-    val appName           = "play-datomisca-person-dog"
-    val appVersion        = "1.0-SNAPSHOT"
-    val datomicVersion    = "0.8.3814"
-    val datomiscaVersion  = "0.2-SNAPSHOT"
+    val appName               = "play-datomisca-person-dog"
+    val appVersion            = "1.0-SNAPSHOT"
+    val datomicVersion        = "0.8.4020.26"
+    val playDatomiscaVersion  = "0.5.2"
 
     val appDependencies = Seq(
-      "play.modules.datomisca" %% "play-datomisca" % datomiscaVersion,
+      "com.pellucid" %% "play-datomisca" % playDatomiscaVersion,
       "com.datomic" % "datomic-free" % datomicVersion exclude("org.slf4j", "slf4j-nop")      
     )
 

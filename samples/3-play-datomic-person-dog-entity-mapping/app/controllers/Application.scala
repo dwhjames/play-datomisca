@@ -14,7 +14,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import datomisca._
-import Datomic._ 
 import play.modules.datomisca._
 
 import models._
@@ -29,11 +28,9 @@ object Application extends Controller {
     Ok("Ok")
   }
 
-  def insertDog(name: String) = Action {
-    Async{
-      Dog.insert(Dog(name)).map { realid =>
-        Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid)))
-      }
+  def insertDog(name: String) = Action.async {
+    Dog.insert(Dog(name)).map { realid =>
+      Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid)))
     }
   }
 
@@ -45,7 +42,7 @@ object Application extends Controller {
     } get
   }
 
-  def insertPerson = Action(parse.json) { request =>
+  def insertPerson = Action.async(parse.json) { request =>
     val json = request.body
 
     json.validate(
@@ -61,18 +58,16 @@ object Application extends Controller {
             val person = Person(
               name, 
               age, 
-              Ref(DId(id))(dog), // a reference to 
+              IdView(id.underlying)(dog), // a reference to 
               characters map { ch => DRef( Person.person.characters / ch ) }
             )
-            Async{
-              Person.insert(person) map { realid =>
-                Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid)))
-              }
+            Person.insert(person) map { realid =>
+              Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid)))
             }
-          case _ => BadRequest(Json.obj("result" -> "KO", "errors" -> s"dog $dogName not found"))
+          case _ => Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> s"dog $dogName not found")))
         }
     } recoverTotal { errors =>
-      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+      Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )))
     }
   }
 
@@ -85,7 +80,7 @@ object Application extends Controller {
   }
 
   // bad update as it updates everything and not only the changed fields(which makes case class not cool for updates)
-  def updatePerson(id: Long) = Action(parse.json) { request =>
+  def updatePerson(id: Long) = Action.async(parse.json) { request =>
     val json = request.body
 
     json.validate(
@@ -101,18 +96,16 @@ object Application extends Controller {
             val person = Person(
               name, 
               age, 
-              Ref(DId(did))(dog), // a reference to 
+              IdView(did.underlying)(dog), // a reference to 
               characters map { ch => DRef( Person.person.characters / ch ) }
             )
-            Async{
-              Person.update(id, person) map { tx =>
-                Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
-              }
+            Person.update(id, person) map { tx =>
+              Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
             }
-          case _ => BadRequest(Json.obj("result" -> "KO", "errors" -> s"person with $id or dog $dogName not found"))
+          case _ => Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> s"person with $id or dog $dogName not found")))
         }
     } recoverTotal { errors =>
-      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+      Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )))
     }
   }
 }

@@ -4,7 +4,6 @@ import scala.util.{Try, Success, Failure}
 import scala.concurrent.{Future, ExecutionContext}
 
 import datomisca._
-import Datomic._
 import DatomicMapping._
 
 import play.api.libs.json._
@@ -51,7 +50,7 @@ object Person {
   // Attributes
   val name       = Attribute(person / "name",       SchemaType.string, Cardinality.one).withDoc("Person's name")
   val age        = Attribute(person / "age",        SchemaType.long,   Cardinality.one).withDoc("Person's age")
-  val dog        = RefAttribute[DEntity]( person / "dog").withDoc("Person's dog")
+  val dog        = Attribute(person / "dog",        SchemaType.ref,    Cardinality.one).withDoc("Person's dog")
   val characters = Attribute(person / "characters", SchemaType.ref,    Cardinality.many).withDoc("Person's characters")
 
   // Characters
@@ -70,8 +69,8 @@ object Person {
   // Json Reads/Writes
   // this one is a bit special as it searches for Dog in the DB to link it to Person
   def jsonReads(implicit database: DDatabase): Reads[PartialAddEntity] = (
-    (__ \ 'name).read(readAttr(Person.name)) and
-    (__ \ 'age) .read(readAttr(Person.age))  and
+    (__ \ 'name).read(readAttr[String](Person.name)) and
+    (__ \ 'age) .read(readAttr[Long](Person.age))  and
     (__ \ 'dog) .read(
       // retrieves the dog from DB
       Reads.of[String]
@@ -90,10 +89,10 @@ object Person {
   )
 
   def jsonWrites = (
-    (__ \ "name")      .write(writeAttr(Person.name)) and
-    (__ \ "age")       .write(writeAttr(Person.age))  and
-    (__ \ "dog")       .write(writeAttr(Person.dog))  and
-    (__ \ "characters").write(writeAttr(Person.characters))
+    (__ \ "name")      .write(writeAttr[String](Person.name)) and
+    (__ \ "age")       .write(writeAttr[Long](Person.age))  and
+    (__ \ "dog")       .write(writeAttr[DRef](Person.dog))  and
+    (__ \ "characters").write(writeAttr[Set[DRef]](Person.characters))
     join
   )
 }

@@ -4,12 +4,12 @@
 
 # Home page
 GET    /                    controllers.Application.index
-PUT    /dog/:name           controllers.Application.insertDog(name: String)
+POST   /dog/:name           controllers.Application.insertDog(name: String)
 GET    /dog/:id             controllers.Application.getDog(id: Long)
 
-PUT    /person              controllers.Application.insertPerson
+POST   /person              controllers.Application.insertPerson
 GET    /person/:id          controllers.Application.getPerson(id: Long)
-POST   /person/:id          controllers.Application.updatePerson(id: Long)
+PUT    /person/:id          controllers.Application.updatePerson(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

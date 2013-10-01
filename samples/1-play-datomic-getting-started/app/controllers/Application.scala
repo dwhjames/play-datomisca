@@ -12,12 +12,13 @@ import scala.util.{Try, Success, Failure}
 import scala.io.Source
 
 import datomisca._
-import Datomic._ 
 
 import play.modules.datomisca._
 
 import play.api.libs.json._
 import play.api.libs.json.Json
+
+import scala.language.reflectiveCalls
 
 object Application extends Controller {
   implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -29,24 +30,25 @@ object Application extends Controller {
   val uri = DatomicPlugin.uri("seattle")
   implicit val conn = Datomic.connect(uri)
 
-  def countCommunities = Action { 
+  def countCommunities = Action {
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
-    val sz = Datomic.q(query).size
+    val sz = Datomic.q(query, conn.database).size
 
     Ok("Found %d communities".format(sz))
-    
+
   }
 
   def getFirstEntity = Action {
+    val database = conn.database
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     try {
-      Datomic.q(query).headOption map {
+      Datomic.q(query, database).headOption map {
         case eid: DLong =>
           val e = database.entity(eid)
           Ok(Json.toJson(e.toMap map { case (k, v) => k.toString -> v.toString }))
@@ -59,16 +61,18 @@ object Application extends Controller {
   }
 
   def getCommunityNames = Action {
+    val database = conn.database
+
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     try {
-      val l = Datomic.q(query) map {
+      val l = Datomic.q(query, database) map {
         case eid: DLong =>
           val entity = database.entity(eid)
-          val name = entity(community / "name").as[DString]
-          Datomic.fromDatomic[String](name)
+          val name = entity.as[String](community / "name")
+          name
       }
       Ok(Json.toJson(l))
     } catch {
@@ -77,12 +81,14 @@ object Application extends Controller {
   }
 
   def getCommunityNeighborHoods = Action {
+    val database = conn.database
+
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     try {
-      val l = Datomic.q(query) map {
+      val l = Datomic.q(query, database) map {
         case eid: DLong =>
           val entity = database.entity(eid)
           val neighborhood = entity(community / "neighborhood").as[DEntity]
@@ -95,12 +101,14 @@ object Application extends Controller {
   }
 
   def getNeighborHoodCommunities = Action {
+    val database = conn.database
+
     val query = Query("""
       [:find ?c :where [?c :community/name]]
     """)
 
     try {
-      Datomic.q(query).headOption map {
+      Datomic.q(query, database).headOption map {
         case eid: DLong =>
           val entity = database.entity(eid)
           val neighborhood = entity(community / "neighborhood").as[DEntity]
@@ -116,56 +124,61 @@ object Application extends Controller {
   }
 
   def findAllCommunityNames = Action {
+    val database = conn.database
     val query = Query("""
       [:find ?c ?n :where [?c :community/name ?n]]
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (eid: DLong, name: DString) => name.as[String]
       }
     ))
   }
 
   def findAllCommunityNamesAndUrls = Action {
+    val database = conn.database
     val query = Query("""
       [:find ?n ?u :where [?c :community/name ?n][?c :community/url ?u]]
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (name: DString, url: DString) => Json.obj("name" -> name.as[String], "url" -> url.as[String])
       }
     ))
   }
 
   def findCategoriesForBelltown = Action {
+    val database = conn.database
     val query = Query("""
       [:find ?e ?c :where [?e :community/name "belltown"][?e :community/category ?c]]
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (e: DLong, c: DString) => Json.obj("id" -> e.as[Long], "url" -> c.as[String])
       }
     ))
   }
 
   def findTwitterCommunities = Action {
+    val database = conn.database
     val query = Query("""
       [:find ?n :where [?c :community/name ?n][?c :community/type :community.type/twitter]]
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (e: DString) => e.as[String]
       }
     ))
   }
 
   def findNECommunities = Action {
+    val database = conn.database
     val query = Query("""
-      [:find ?c_name 
+      [:find ?c_name
        :where [?c :community/name ?c_name]
               [?c :community/neighborhood ?n]
               [?n :neighborhood/district ?d]
@@ -174,15 +187,16 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (e: DString) => e.as[String]
       }
     ))
   }
 
   def findCommunitiesRegions = Action {
+    val database = conn.database
     val query = Query("""
-      [:find ?c_name ?r_name 
+      [:find ?c_name ?r_name
       :where [?c :community/name ?c_name]
              [?c :community/neighborhood ?n]
              [?n :neighborhood/district ?d]
@@ -191,17 +205,18 @@ object Application extends Controller {
     """)
 
     Ok(Json.toJson(
-      Datomic.q(query) map {
+      Datomic.q(query, database) map {
         case (cname: DString, rname: DRef) => Json.obj(cname.as[String] -> rname.toString)
       }
     ))
   }
-  
+
   def findTwitterFacebook = Action {
+    val database = conn.database
     val query = Query("""
       [
-       :find ?n 
-       :in $ ?t 
+       :find ?n
+       :in $ ?t
        :where [?c :community/name ?n]
              [?c :community/type ?t]
       ]
@@ -217,10 +232,11 @@ object Application extends Controller {
   }
 
   def findTwitterFacebookList = Action {
+    val database = conn.database  
     val query = Query("""
       [
-       :find ?n ?t 
-       :in $ [?t ...] 
+       :find ?n ?t
+       :in $ [?t ...]
        :where [?c :community/name ?n]
               [?c :community/type ?t]
       ]
@@ -228,9 +244,9 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(
-        query, 
-        database, 
-        DSet(DString(":community.type/facebook-page"), DString(":community.type/twitter"))
+        query,
+        database,
+        Datomic.coll(":community.type/facebook-page", ":community.type/twitter")
       ) map {
           case (cname: DString, tpe: DString) => Json.obj(cname.as[String] -> tpe.as[String])
       }
@@ -238,10 +254,11 @@ object Application extends Controller {
   }
 
   def findNonCommercialEmaillistOrCommercialWebSites = Action {
+    val database = conn.database
     val query = Query("""
       [
-       :find ?n ?t ?ot 
-       :in $ [[?t ?ot]] 
+       :find ?n ?t ?ot
+       :in $ [[?t ?ot]]
        :where [?c :community/name ?n]
               [?c :community/type ?t]
               [?c :community/orgtype ?ot]
@@ -249,13 +266,13 @@ object Application extends Controller {
     """)
 
     val results = Datomic.q(
-      query, database, 
-      DSet(
-        DSet(DString(":community.type/email-list"), DString(":community.orgtype/community")),
-        DSet(DString(":community.type/website"), DString(":community.orgtype/commercial"))
+      query, database,
+      Datomic.coll(
+        Datomic.coll(":community.type/email-list", ":community.orgtype/community"),
+        Datomic.coll(":community.type/website", ":community.orgtype/commercial")
       )
     )
-    
+
     Ok(Json.toJson(
       results map {
         case (cname: DString, tpe: DString, orgType: DString) => Json.arr(cname.as[String], tpe.as[String], orgType.as[String])
@@ -264,16 +281,17 @@ object Application extends Controller {
   }
 
   def findAllCommNamesAfterCInAlphaOrder = Action {
+    val database = conn.database
     val query = Query("""
       [
-        :find ?n 
-        :where [?c :community/name ?n] 
+        :find ?n
+        :where [?c :community/name ?n]
                [(.compareTo ?n "C") ?res]
                [(< ?res 0)]]
     """)
 
-    val results = Datomic.q(query)
-    
+    val results = Datomic.q(query, database)
+
     Ok(Json.toJson(
       results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
@@ -282,15 +300,16 @@ object Application extends Controller {
   }
 
   def findAllCommWallingford = Action {
+    val database = conn.database
     val query = Query("""
       [
-       :find ?n 
+       :find ?n
        :where [(fulltext $ :community/name "Wallingford") [[?e ?n]]]
       ]
     """)
 
-    val results = Datomic.q(query)
-    
+    val results = Datomic.q(query, database)
+
     Ok(Json.toJson(
       results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
@@ -299,10 +318,11 @@ object Application extends Controller {
   }
 
   def findAllCommWebsitesFood = Action {
+    val database = conn.database
     val query = Query("""
       [
-        :find ?name ?cat 
-        :in $ ?type ?search 
+        :find ?name ?cat
+        :in $ ?type ?search
         :where [?c :community/name ?name]
                [?c :community/type ?type]
                [(fulltext $ :community/category ?search) [[?c ?cat]]]
@@ -310,7 +330,7 @@ object Application extends Controller {
     """)
 
     val results = Datomic.q(query, database, DString(":community.type/website"), DString("food"))
-    
+
     Ok(Json.toJson(
       results map {
         case (cname: DString, cat: DString) => Json.obj(cname.as[String] -> cat.as[String])
@@ -319,6 +339,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesTwitter = Action {
+    val database = conn.database
     val rule = Query.rules("""
       [[
         [twitter ?c]
@@ -327,15 +348,15 @@ object Application extends Controller {
     """)
     val query = Query("""
       [
-        :find ?n 
-        :in $ % 
+        :find ?n
+        :in $ %
         :where [?c :community/name ?n]
                (twitter ?c)
       ]
     """)
 
     val results = Datomic.q(query, database, rule)
-    
+
     Ok(Json.toJson(
       results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
@@ -344,6 +365,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesNESW = Action {
+    val database = conn.database
     val rule = Query.rules("""
       [[
         [region ?c ?r]
@@ -355,8 +377,8 @@ object Application extends Controller {
     """)
     val query = Query("""
       [
-        :find ?n 
-        :in $ % 
+        :find ?n
+        :in $ %
         :where [?c :community/name ?n]
                (region ?c :region/ne)
       ]
@@ -364,8 +386,8 @@ object Application extends Controller {
 
     val query2 = Query("""
       [
-        :find ?n 
-        :in $ % 
+        :find ?n
+        :in $ %
         :where [?c :community/name ?n]
                (region ?c :region/sw)
       ]
@@ -373,7 +395,7 @@ object Application extends Controller {
 
     val results = Datomic.q(query, database, rule)
     val results2 = Datomic.q(query2, database, rule)
-    
+
     Ok(Json.toJson(
       (results ++  results2) map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
@@ -382,6 +404,7 @@ object Application extends Controller {
   }
 
   def findAllCommNamesNESWOr = Action {
+    val database = conn.database
     val rule = Query.rules("""
       [[
         [region ?c ?r]
@@ -411,7 +434,7 @@ object Application extends Controller {
     """)
     val query = Query("""
       [
-       :find ?n :in $ % 
+       :find ?n :in $ %
        :where [?c :community/name ?n]
               (northern ?c)
               (social-media ?c)
@@ -419,7 +442,7 @@ object Application extends Controller {
     """)
 
     val results = Datomic.q(query, database, rule)
-    
+
     Ok(Json.toJson(
       results map {
         case (cname: DString) => Json.obj("community" -> cname.as[String])
@@ -427,21 +450,22 @@ object Application extends Controller {
     ))
   }
 
-  def findAllDBTx = Action {
+  def findAllDBTx = Action.async {
+    val database = conn.database
     val query = Query("""
       [:find ?when :where [?tx :db/txInstant ?when]]
     """)
 
-    val results = Datomic.q(query)
+    val results = Datomic.q(query, database)
 
-    val sorted = results.map( dd => dd.asInstanceOf[DInstant]).sortWith( (_1: DInstant, _2: DInstant) => _1.as[java.util.Date].after(_2.as[java.util.Date]) )
+    val sorted = results.map( dd => dd.asInstanceOf[DInstant]).toSeq.sortWith( (_1: DInstant, _2: DInstant) => _1.as[java.util.Date].after(_2.as[java.util.Date]) )
     val data_tx_date = sorted(0)
     val schema_tx_date = sorted(1)
 
     val query2 = Query("""
       [:find ?c :where [?c :community/name]]
     """)
-    
+
     val nbSch = Datomic.q(query2, database.asOf(schema_tx_date)).size
     val nbData = Datomic.q(query2, database.asOf(data_tx_date)).size
 
@@ -449,91 +473,83 @@ object Application extends Controller {
     val data = Datomic.parseOps(dataContent)
 
     data.map { data =>
-      val dbAfter = Datomic.withData(data).dbAfter
+      val dbAfter = database.withData(data).dbAfter
       val nbWithAfter = Datomic.q(query2, dbAfter).size
       val nbCurrent = Datomic.q(query2, database).size
-      Async{
-        Datomic.transact(data) map { tx =>
-          val nbTransactAfter = Datomic.q(query2, database).size
-          val nbSince = Datomic.q(query2, database.since(data_tx_date)).size
+      Datomic.transact(data) map { tx =>
+        val nbTransactAfter = Datomic.q(query2, database).size
+        val nbSince = Datomic.q(query2, database.since(data_tx_date)).size
 
-          Ok(Json.toJson(
-            Json.obj(
-              "data"              -> data_tx_date.as[Long],
-              "schema"            -> schema_tx_date.as[Long],
-              "nb_schema"         -> nbSch,
-              "nb_data"           -> nbData,
-              "nb_after_with"     -> nbWithAfter,
-              "nb_current"        -> nbCurrent,
-              "nb_transact_after" -> nbTransactAfter,
-              "nb_since"          -> nbSince
-            )
-          ))
-        }
+        Ok(Json.toJson(
+          Json.obj(
+            "data"              -> data_tx_date.as[Long],
+            "schema"            -> schema_tx_date.as[Long],
+            "nb_schema"         -> nbSch,
+            "nb_data"           -> nbData,
+            "nb_after_with"     -> nbWithAfter,
+            "nb_current"        -> nbCurrent,
+            "nb_transact_after" -> nbTransactAfter,
+            "nb_since"          -> nbSince
+          )
+        ))
       }
     } getOrElse {
-      BadRequest("Data not valid")
+      Future.successful(BadRequest("Data not valid"))
     }
   }
 
-  def makeNewPartition = Action {
+  def makeNewPartition = Action.async {
     val newPartition = Entity.add(DId(Partition.DB))(
       Namespace.DB / "ident" -> ":communities",
       Namespace.DB.INSTALL / "_partition" -> "db.part/db"
     )
 
-    Async {
-      Datomic.transact(newPartition) map { tx =>
-        Ok(Json.obj("tx" -> tx.toString))
-      }
+    Datomic.transact(newPartition) map { tx =>
+      Ok(Json.obj("tx" -> tx.toString))
     }
   }
 
-  def makeNewComm = Action {
+  def makeNewComm = Action.async {
     val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
 
-    Async {
-      Datomic.transact(newComm) map { tx =>
-        Ok(Json.obj("tx" -> tx.toString))
-      }
+    Datomic.transact(newComm) map { tx =>
+      Ok(Json.obj("tx" -> tx.toString))
     }
-  }  
+  }
 
-  def updateComm = Action {
+  def updateComm = Action.async {
+    val database = conn.database
     val query = Query("""
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
-    val id = Datomic.q(query).head.asInstanceOf[DLong]
-    
+    val id = Datomic.q(query, database).head.asInstanceOf[DLong]
+
     val op = Fact.add(DId(id))( Namespace("community") / "category" -> "free stuff" )
-    Async {
-      Datomic.transact(op) map { tx =>
-        Ok(Json.obj("tx" -> tx.toString))
-      }
+    Datomic.transact(op) map { tx =>
+      Ok(Json.obj("tx" -> tx.toString))
     }
 
   }
 
-  def retractComm = Action {
+  def retractComm = Action.async {
+    val database = conn.database
     val query = Query("""
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
-    val id = Datomic.q(query).head.asInstanceOf[DLong]
-    
+    val id = Datomic.q(query, database).head.asInstanceOf[DLong]
+
     val op = Entity.retract(id)
-    Async {
-      Datomic.transact(op) map { tx =>
-        Ok(Json.obj("tx" -> tx.toString))
-      }
+    Datomic.transact(op) map { tx =>
+      Ok(Json.obj("tx" -> tx.toString))
     }
 
-  }  
-  
-  def transReport = Action {
+  }
+
+  def transReport = Action.async {
     val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
       Namespace("community") / "name" -> "Easton"
     )
@@ -541,33 +557,31 @@ object Application extends Controller {
     //Await.result(Datomic.transact(newComm), Duration("2 seconds"))
     val txReportQueue = conn.txReportQueue
 
-    Async{
-      Datomic.transact(newComm) map { tx =>
-        play.Logger.info("hello")
-        //val report = conn.connection.txReportQueue.poll()
-        txReportQueue.stream.head match {
-          case None => BadRequest("Unexpected result")
-          case Some(report) =>
-            play.Logger.info("hello2")
+    Datomic.transact(newComm) map { tx =>
+      play.Logger.info("hello")
+      //val report = conn.connection.txReportQueue.poll()
+      txReportQueue.stream.head match {
+        case None => BadRequest("Unexpected result")
+        case Some(report) =>
+          play.Logger.info("hello2")
 
-            val query = Query("""
-              [
-               :find ?e ?aname ?v ?added
-               :in $ [[?e ?a ?v _ ?added]]
-               :where [?e ?a ?v _ ?added]
-                      [?a :db/ident ?aname]
-              ]
-            """)
+          val query = Query("""
+            [
+             :find ?e ?aname ?v ?added
+             :in $ [[?e ?a ?v _ ?added]]
+             :where [?e ?a ?v _ ?added]
+                    [?a :db/ident ?aname]
+            ]
+          """)
 
-            Ok {
-              Datomic.q(query, report.dbAfter, new DSet(report.txData.toSet)).map{
-                case (e, aname, v, added) =>
-                  Json.arr(e.toString, aname.toString, v.toString, added.toString)
-              }.foldLeft(Json.arr())( (acc, e) => acc :+ e)
-            }
-        }
-        
+          Ok {
+            Datomic.q(query, report.dbAfter, DColl(report.txData)).map{
+              case (e, aname, v, added) =>
+                Json.arr(e.toString, aname.toString, v.toString, added.toString)
+            }.foldLeft(Json.arr())( (acc, e) => acc :+ e)
+          }
       }
+
     }
-  }  
+  }
 }

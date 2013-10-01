@@ -81,7 +81,7 @@ object Dog {
 
 // Ref is a pure technical class used to indicate that it references another entity (also contains the DId temporary or final)
 // DRef is a direct reference to a pure non-typed Ident (an enumerator in datomic)
-case class Person(name: String, age: Long, dog: Ref[Dog], characters: Set[DRef])
+case class Person(name: String, age: Long, dog: IdView[Dog], characters: Set[DRef])
 
 object Person {
   import Dog._
@@ -114,14 +114,14 @@ object Person {
   implicit val personReader = (
     name      .read[String]   and
     age       .read[Long]     and
-    dog       .read[Ref[Dog]] and
+    dog       .read[IdView[Dog]] and
     characters.read[Set[DRef]]
   )(Person.apply _)
 
   implicit val personWriter = (
     name      .write[String]   and
     age       .write[Long]     and
-    dog       .write[Ref[Dog]] and
+    dog       .write[IdView[Dog]] and
     characters.write[Set[DRef]]
   )(unlift(Person.unapply))
 
@@ -135,7 +135,7 @@ object Person {
     """)
 
     Try {
-      Datomic.q(query) map {
+      Datomic.q(query, conn.database).toList map {
         case e: DLong =>
           val entity = database.entity(e)
           DatomicMapping.fromEntity[Person](entity)

@@ -14,14 +14,13 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import datomisca._
-import Datomic._ 
 import play.modules.datomisca._
 
 import models._
 
 object Application extends Controller {
   val uri = DatomicPlugin.uri("mem")
-      
+
   implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
   implicit val conn = Datomic.connect(uri)
 
@@ -29,29 +28,27 @@ object Application extends Controller {
     Ok("Ok")
   }
 
-  def insertDog(name: String) = Action {
-    Async{
-      // generates tmp id
-      val dogId = DId(Common.MY_PART)
+  def insertDog(name: String) = Action.async {
+    // generates tmp id
+    val dogId = DId(Common.MY_PART)
 
-      // inserts dog
-      Datomic.transact(
-        Entity.add(dogId)(
-          Dog.dog / "name" -> name
-        )
-      ) map { tx =>
-        // resolves real ID
-        val realId = tx.resolve(dogId)
-        Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId)))
-      }
+    // inserts dog
+    Datomic.transact(
+      Entity.add(dogId)(
+        Dog.dog / "name" -> name
+      )
+    ) map { tx =>
+      // resolves real ID
+      val realId = tx.resolve(dogId)
+      Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId)))
     }
   }
 
   def getDog(id: Long) = Action {
     Try {
-      val entity = database.entity(id)
+      val entity = conn.database.entity(id)
       Ok(Json.obj(
-        "result" -> "OK", 
+        "result" -> "OK",
         "dog" -> Json.obj(
           "name" -> entity.getAs[String](Dog.dog / "name")
         )
@@ -66,7 +63,7 @@ object Application extends Controller {
   """)
 
 
-  def insertPerson = Action(parse.json) { request =>
+  def insertPerson = Action.async(parse.json) { request =>
     val json = request.body
 
     json.validate(
@@ -77,44 +74,42 @@ object Application extends Controller {
       tupled
     ) map {
       case (name, age, dogName, characters) =>
-        Datomic.q(queryDogByName, database, DString(dogName)).headOption map {
+        Datomic.q(queryDogByName, conn.database, DString(dogName)).headOption map {
           case dogId: DLong =>
             val personId = DId(Common.MY_PART)
-            Async {
-              Datomic.transact(
-                Entity.add(personId)(
-                  Person.person / "name"       -> name,
-                  Person.person / "age"        -> age,
-                  Person.person / "dog"        -> DRef(DId(dogId)),
-                  Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
-                )
-              ) map { tx =>
-                val realId = tx.resolve(personId)
-                Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId)))                
-              }
+            Datomic.transact(
+              Entity.add(personId)(
+                Person.person / "name"       -> name,
+                Person.person / "age"        -> age,
+                Person.person / "dog"        -> DRef(DId(dogId)),
+                Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
+              )
+            ) map { tx =>
+              val realId = tx.resolve(personId)
+              Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realId)))
             }
         } getOrElse {
-          BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Dog with name $dogName not found")))
+          Future.successful(BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Dog with name $dogName not found"))))
         }
-      case _ => BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unexpected result")))
+      case _ => Future.successful(BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"unexpected result"))))
     } recoverTotal { errors =>
-      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+      Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )))
     }
   }
 
   def getPerson(id: Long) = Action {
     try {
-      val entity = database.entity(id)
+      val entity = conn.database.entity(id)
       println("dog:"+ entity(Person.person / "dog").as[DEntity].toMap)
       println("dogName:"+entity.as[DEntity](Person.person / "dog").as[String](Dog.dog / "name"))
-      println("chars:"+entity(Person.person / "characters").as[Set[String]])
+      println("chars:"+entity(Person.person / "characters").as[Set[DKeyword]])
       val name = entity(Person.person / "name").as[String]
       val age  = entity(Person.person / "age").as[Long]
       val dog  = entity(Person.person / "dog").as[DEntity]
       val dogName = dog(Dog.dog / "name").as[String]
-      val characters = entity(Person.person / "characters").as[Set[DRef]].map(_.toString)
+      val characters = entity(Person.person / "characters").as[Set[DKeyword]].map(_.toString)
       Ok(Json.obj(
-        "result" -> "OK", 
+        "result" -> "OK",
         "dog" -> Json.obj(
           "name" -> name,
           "age" -> age,
@@ -125,12 +120,13 @@ object Application extends Controller {
       case e: EntityNotFoundException =>
         BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person with id $id not found")))
       case e: Throwable =>
+      e.printStackTrace
         BadRequest(Json.toJson(Json.obj("result" -> "KO", "error" -> s"Person entity not mappable")))
     }
   }
 
   // please note the selective update
-  def updatePerson(id: Long) = Action(parse.json) { request =>
+  def updatePerson(id: Long) = Action.async(parse.json) { request =>
     val json = request.body
 
     json.validate(
@@ -145,22 +141,20 @@ object Application extends Controller {
         name foreach { name => builder += (Person.person / "name" -> DString(name)) }
         age  foreach { age  => builder += (Person.person / "age"  -> DLong(age)) }
         dogName foreach { dogName =>
-          Datomic.q(queryDogByName, database, DString(dogName)).headOption.foreach{ 
+          Datomic.q(queryDogByName, conn.database, DString(dogName)).headOption.foreach{
             case dogid: DLong => builder += (Person.person / "dog" -> DRef(DId(dogid)))
             case _ =>
           }
         }
         characters foreach { characters =>
-          builder += (Person.person / "characters" -> new DSet(characters.map( ch => DRef(Person.person.characters / ch)) ))
+          builder += (Person.person / "characters" -> Datomic.coll(characters.map( ch => DRef(Person.person.characters / ch)) ))
         }
-        
-        Async {
-          Datomic.transact(Entity.add(DId(id), builder.result)) map { tx =>
-            Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
-          }
+
+        Datomic.transact(Entity.add(DId(id), builder.result)) map { tx =>
+          Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))
         }
     } recoverTotal { errors =>
-      BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) ))
+      Future.successful(BadRequest(Json.obj("result" -> "KO", "errors" -> JsError.toFlatJson(errors) )))
     }
   }
 }
