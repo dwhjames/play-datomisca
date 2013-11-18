@@ -1,4 +1,4 @@
-[
+
 {:district/region :region/se, :db/id #db/id[:db.part/user -1000451], :district/name "Greater Duwamish"}
 {:db/id #db/id[:db.part/user -1000452], :neighborhood/name "Beacon Hill", :neighborhood/district #db/id[:db.part/user -1000451]}
 {:community/category ["community members"], :community/orgtype :community.orgtype/community, :community/type :community.type/email-list, :db/id #db/id[:db.part/user -1000453], :community/name "nbeaconhillneighbors", :community/url "http://groups.yahoo.com/group/nbeaconhillneighbors/", :community/neighborhood #db/id[:db.part/user -1000452]}
@@ -323,4 +323,3 @@
 {:district/region :region/se, :db/id #db/id[:db.part/user -1000772], :district/name "Southeast"}
 {:db/id #db/id[:db.part/user -1000773], :neighborhood/name "Jackson Place", :neighborhood/district #db/id[:db.part/user -1000772]}
 {:community/category ["neighborhood-issues" "neighborhood-planning"], :community/orgtype :community.orgtype/community, :community/type :community.type/website, :db/id #db/id[:db.part/user -1000774], :community/name "Jackson Place Community Council", :community/url "http://www.jacksonplace.org", :community/neighborhood #db/id[:db.part/user -1000773]}
-]

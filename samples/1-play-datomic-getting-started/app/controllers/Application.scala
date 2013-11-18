@@ -1,27 +1,19 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-
-import play.api.Play.current
-import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
-import scala.concurrent.duration.Duration
-import scala.util.{Try, Success, Failure}
+import scala.language.reflectiveCalls
+import scala.concurrent.Future
 import scala.io.Source
 
-import datomisca._
-
-import play.modules.datomisca._
-
-import play.api.libs.json._
+import play.api.Play.current
+import play.api.mvc.{Action, Controller}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 
-import scala.language.reflectiveCalls
+import datomisca._
+import play.modules.datomisca._
+
 
 object Application extends Controller {
-  implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val community = new Namespace("community") {
     val tpe = new Namespace("community.type")

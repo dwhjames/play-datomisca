@@ -9,7 +9,7 @@ object PlayDatomiscaBuild extends Build {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  :=  "com.pellucid",
-    version       :=  "0.5.2",
+    version       :=  "0.6",
     scalaVersion  :=  "2.10.2",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -35,7 +35,6 @@ object PlayDatomiscaBuild extends Build {
   lazy val playDatomicsaSettings =
     buildSettings ++
     bintray.Plugin.bintraySettings ++
-    //Publish.settings ++
     Seq(
       name        := "play-datomisca",
       shellPrompt := CustomShellPrompt.customPrompt,
@@ -53,17 +52,17 @@ object Dependencies {
 
   object V {
     // compile
-    val datomic      = "0.8.4020.26"
-    val datomisca    = "0.5.1"
-    val play         = "2.2.0"
+    val datomic      = "0.8.4260"
+    val datomisca    = "0.6"
+    val play         = "2.2.1"
 
     // test
     val junit     = "4.8"
-    val specs2    = "2.0"
+    val specs2    = "2.3.4"
   }
 
   object Compile {
-    val datomic      = "com.datomic"       %  "datomic-pro"     % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
+    val datomic      = "com.datomic"       %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
     val datomisca    = "com.pellucid"      %% "datomisca"       % V.datomisca
     val play         = "com.typesafe.play" %% "play"            % V.play       % "provided"
   }
@@ -110,18 +109,3 @@ object CustomShellPrompt {
 
   }
 }
-
-/*object Publish {
-
-  lazy val settings = Seq(
-    publishMavenStyle := true,
-    publishTo <<= version { v: String =>
-      val localPublishRepo = "../datomisca-repo/"
-      if (v.trim endsWith "SNAPSHOT")
-        Some(Resolver.file("snapshots", new File(localPublishRepo + "/snapshots")))
-      else
-        Some(Resolver.file("releases",  new File(localPublishRepo + "/releases")))
-    }
-  )
-
-}*/

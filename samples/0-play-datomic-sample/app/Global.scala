@@ -1,15 +1,16 @@
-import play.api._
 
-import play.modules.datomisca._
-import datomisca._
-
-import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+import play.api.{Application, GlobalSettings}
+import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import datomisca._
+import play.modules.datomisca._
+
+
 object Global extends GlobalSettings {
-  import play.api.Play.current
 
   override def onStart(app: Application){
     val uri = DatomicPlugin.uri("mem")
@@ -37,7 +38,6 @@ object Global extends GlobalSettings {
       stupid
     )
 
-    implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
     implicit val conn = Datomic.connect(uri)
     val fut = Datomic.transact(schema) map { tx =>
       println("bootstrapped data")

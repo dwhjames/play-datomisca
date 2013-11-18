@@ -1,8 +1,8 @@
 package play.modules.datomisca
 
 import datomisca._
+
 import play.api.libs.json._
-import play.api.data.validation.ValidationError
 import play.api.libs.functional.{Monoid, Reducer}
 
 object Implicits {

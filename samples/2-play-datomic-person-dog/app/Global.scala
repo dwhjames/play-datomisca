@@ -1,12 +1,12 @@
-import play.api._
 
-import play.modules.datomisca._
-import datomisca._
-
-import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+
+import play.api.{Application, GlobalSettings}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import datomisca._
+import play.modules.datomisca._
 
 import models._
 
@@ -18,7 +18,6 @@ object Global extends GlobalSettings {
         
     play.Logger.info("created DB:" + Datomic.createDatabase(uri))
 
-    implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
     implicit val conn = Datomic.connect(uri)
 
     // TODO : here we should verify first that schema is not already in DB

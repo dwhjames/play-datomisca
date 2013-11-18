@@ -1,29 +1,21 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-
 import play.api.Play.current
-import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
-import scala.concurrent.duration.Duration
-import scala.util.{Try, Success, Failure}
+import play.api.mvc.{Action, Controller}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import datomisca._
-import Datomic._
 import play.modules.datomisca._
 
+
 object Application extends Controller {
-  def index = Action { Async {
+  def index = Action.async {
     val uri = DatomicPlugin.uri("mem")
     implicit val conn = Datomic.connect(uri)
 
     val person = new Namespace("person") {
       val character = Namespace("person.character")
     }
-
-    implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
     Datomic.transact(
       Entity.add(DId(Partition.USER))(
@@ -49,9 +41,9 @@ object Application extends Controller {
       ]
       """)
 
-      Datomic.q(query, database, DLong(45L))
+      Datomic.q(query, conn.database, DLong(45L))
     } map { l =>
       Ok(l.toString)
     }
-  }}
+  }
 }

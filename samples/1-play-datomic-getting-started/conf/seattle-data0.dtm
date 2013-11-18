@@ -1,4 +1,4 @@
-[
+
 {:district/region :region/e, :db/id #db/id[:db.part/user -1000001], :district/name "East"}
 {:db/id #db/id[:db.part/user -1000002], :neighborhood/name "Capitol Hill", :neighborhood/district #db/id[:db.part/user -1000001]}
 {:community/category ["15th avenue residents"], :community/orgtype :community.orgtype/community, :community/type :community.type/email-list, :db/id #db/id[:db.part/user -1000003], :community/name "15th Ave Community", :community/url "http://groups.yahoo.com/group/15thAve_Community/", :community/neighborhood #db/id[:db.part/user -1000002]}
@@ -449,4 +449,3 @@
 {:district/region :region/sw, :db/id #db/id[:db.part/user -1000448], :district/name "Delridge"}
 {:db/id #db/id[:db.part/user -1000449], :neighborhood/name "Delridge", :neighborhood/district #db/id[:db.part/user -1000448]}
 {:community/category ["environmental conservation"], :community/orgtype :community.orgtype/community, :community/type :community.type/website, :db/id #db/id[:db.part/user -1000450], :community/name "Nature Consortium", :community/url "http://www.naturec.org", :community/neighborhood #db/id[:db.part/user -1000449]}
-]

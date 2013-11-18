@@ -1,4 +1,4 @@
-[
+
  ;; community
 
  {:db/id #db/id[:db.part/db]
@@ -102,4 +102,3 @@
  [:db/add #db/id[:db.part/user] :db/ident :region/sw]
  [:db/add #db/id[:db.part/user] :db/ident :region/w]
  [:db/add #db/id[:db.part/user] :db/ident :region/nw]
- ]

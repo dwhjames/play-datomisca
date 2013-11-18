@@ -1,15 +1,11 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-
-import scala.concurrent._
-import scala.concurrent.util._
-import java.util.concurrent.TimeUnit._
-import scala.concurrent.duration.Duration
+import scala.concurrent.Future
 import scala.util.{Try, Success, Failure}
 
 import play.api.Play.current
+import play.api.mvc.{Action, Controller}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -18,10 +14,9 @@ import play.modules.datomisca._
 
 import models._
 
+
 object Application extends Controller {
   val uri = DatomicPlugin.uri("mem")
-      
-  implicit val ctx = play.api.libs.concurrent.Execution.Implicits.defaultContext
   implicit val conn = Datomic.connect(uri)
 
   def index = Action {

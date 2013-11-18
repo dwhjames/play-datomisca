@@ -16,11 +16,11 @@
 
 package play.modules.datomisca
 
-import play.api._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.util.Try
+
+import play.api.{Application, Logger, PlayException, Plugin}
 
 import datomisca.{Datomic, Connection}
-import scala.util.{Try, Success, Failure}
 
 
 class DatomicPlugin(app: Application) extends Plugin {

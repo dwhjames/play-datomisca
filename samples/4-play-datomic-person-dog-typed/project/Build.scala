@@ -7,8 +7,8 @@ object ApplicationBuild extends Build {
 
     val appName               = "play-datomisca-person-dog-typed"
     val appVersion            = "1.0-SNAPSHOT"
-    val datomicVersion        = "0.8.4020.26"
-    val playDatomiscaVersion  = "0.5.2"
+    val datomicVersion        = "0.8.4260"
+    val playDatomiscaVersion  = "0.6"
 
     val appDependencies = Seq(
       "com.pellucid" %% "play-datomisca" % playDatomiscaVersion,
@@ -18,11 +18,8 @@ object ApplicationBuild extends Build {
     val main = play.Project(appName, appVersion, appDependencies).settings(
       //scalacOptions ++= Seq("-Xlog-implicits"),
       resolvers ++= Seq(
-        Resolver.file("local repository", file("/Users/pvo/.ivy2/local"))(Resolver.ivyStylePatterns),
-        "clojars" at "https://clojars.org/repo",
-        "couchbase" at "http://files.couchbase.com/maven2",
-        "datomisca-repo snapshots" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/snapshots",    
-        "datomisca-repo releases" at "https://github.com/pellucidanalytics/datomisca-repo/raw/master/releases"   
+        "Pellucid Bintray" at "http://dl.bintray.com/content/pellucid/maven",
+        "clojars" at "https://clojars.org/repo"
       )
     )
 
