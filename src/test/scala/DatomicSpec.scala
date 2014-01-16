@@ -8,6 +8,7 @@ import play.api.test.Helpers._
 import play.modules.datomisca._
 import datomisca._
 
+import scala.language.reflectiveCalls
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 
@@ -90,7 +91,7 @@ class DatomicSpec extends Specification {
               ]
             """)
 
-            val results = Datomic.q(query, Datomic.database, DLong(45L))
+            val results = Datomic.q(query, Datomic.database, 45L)
             println("results:"+results)
           }
         }

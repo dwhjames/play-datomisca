@@ -62,6 +62,7 @@ object Implicits {
 
   implicit val PartialAddEntityReducer: Reducer[PartialAddEntity, PartialAddEntity] = Reducer( p => p )
 
+  @deprecated("use readFact or readNullableFact", "0.7")
   def readAttr[T] = new ReadAttrHelper[T]
 
   class ReadAttrHelper[T] {
@@ -72,6 +73,35 @@ object Implicits {
         js.validate[T](jsReads) map { t =>
           ac.convert(attr).write(t)
         }
+      }
+  }
+
+  def readFact[T] = new ReadFactHelper[T]
+
+  class ReadFactHelper[T] {
+    def apply[DD <: AnyRef, Card <: Cardinality]
+             (path: JsPath, attr: Attribute[DD, Card])
+             (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) =
+      path.read(jsReads) map { t =>
+        ac.convert(attr).write(t)
+      }
+  }
+
+  def readNullableFact[T] = new ReadNullableFactHelper[T]
+
+  class ReadNullableFactHelper[T] {
+    def apply[DD <: AnyRef, Card <: Cardinality]
+             (path: JsPath, attr: Attribute[DD, Card])
+             (implicit ac: Attribute2PartialAddEntityWriter[DD, Card, T], jsReads: Reads[T]) =
+      Reads[PartialAddEntity] { js =>
+        path.asSingleJsResult(js).fold(
+          error =>
+            JsSuccess(PartialAddEntity.empty),
+          jsval =>
+            jsval.validate[T](jsReads) map { t =>
+              ac.convert(attr).write(t)
+            }
+        )
       }
   }
 
