@@ -9,8 +9,8 @@ object PlayDatomiscaBuild extends Build {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  :=  "com.pellucid",
-    version       :=  "0.7-alpha-3",
-    scalaVersion  :=  "2.10.2",
+    version       :=  "0.7-alpha-4",
+    scalaVersion  :=  "2.10.4",
     scalacOptions ++= Seq(
         "-deprecation",
         "-feature",
@@ -32,6 +32,10 @@ object PlayDatomiscaBuild extends Build {
     "Pellucid Bintray" at "http://dl.bintray.com/content/pellucid/maven"
   )
 
+  val clojarsRepo = Seq(
+    "clojars" at "https://clojars.org/repo"
+  )
+
   lazy val playDatomicsaSettings =
     buildSettings ++
     bintray.Plugin.bintraySettings ++
@@ -39,7 +43,7 @@ object PlayDatomiscaBuild extends Build {
       name        := "play-datomisca",
       shellPrompt := CustomShellPrompt.customPrompt,
 
-      resolvers           ++= typesafeRepo ++ pellucidRepo,
+      resolvers           ++= typesafeRepo ++ pellucidRepo ++ clojarsRepo,
       libraryDependencies ++= Dependencies.playDatomicsa,
 
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
@@ -52,13 +56,13 @@ object Dependencies {
 
   object V {
     // compile
-    val datomic      = "0.8.4260"
-    val datomisca    = "0.7-alpha-7"
-    val play         = "2.2.1"
+    val datomic      = "0.9.4724"
+    val datomisca    = "0.7-alpha-10"
+    val play         = "2.3.0"
 
     // test
     val junit     = "4.8"
-    val specs2    = "2.3.4"
+    val specs2    = "2.3.11"
   }
 
   object Compile {
