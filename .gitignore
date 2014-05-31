@@ -17,4 +17,6 @@ project/plugins/project/
 .DS_Store
 .history
 
+# IntelliJ
+.idea
 

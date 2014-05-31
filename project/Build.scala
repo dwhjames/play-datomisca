@@ -9,7 +9,7 @@ object PlayDatomiscaBuild extends Build {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  :=  "com.pellucid",
-    version       :=  "0.7-alpha-3.5",
+    version       :=  "0.7-alpha-4",
     scalaVersion  :=  "2.10.4",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -58,7 +58,7 @@ object Dependencies {
     // compile
     val datomic      = "0.9.4724"
     val datomisca    = "0.7-alpha-10"
-    val play         = "2.3.0-RC1"
+    val play         = "2.3.0"
 
     // test
     val junit     = "4.8"
