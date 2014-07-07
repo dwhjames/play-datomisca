@@ -1,6 +1,4 @@
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import play.api.test._
 import play.api.test.Helpers._
@@ -12,7 +10,7 @@ import scala.language.reflectiveCalls
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 
-@RunWith(classOf[JUnitRunner])
+
 class DatomicSpec extends Specification {
   "DatomicPlugin" should {
     "read conf" in {
