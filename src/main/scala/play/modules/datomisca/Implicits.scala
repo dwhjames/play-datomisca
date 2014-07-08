@@ -105,6 +105,7 @@ object Implicits {
       }
   }
 
+  @deprecated("use writeFact", "0.7")
   def writeAttr[T] = new WriteAttrHelper[T]
 
   class WriteAttrHelper[T] {
@@ -113,6 +114,17 @@ object Implicits {
              (implicit ac: Attribute2EntityReaderCast[DD, Card, T], jsWrites: Writes[T]) =
       Writes[Entity] { entity =>
         jsWrites.writes(ac.convert(attr).read(entity))
+      }
+  }
+
+  def writeFact[T] = new WriteFactHelper[T]
+
+  class WriteFactHelper[T] {
+    def apply[DD <: AnyRef, Card <: Cardinality]
+             (path: JsPath, attr: Attribute[DD, Card])
+             (implicit ac: Attribute2EntityReaderCast[DD, Card, T], jsWrites: Writes[T]) =
+      OWrites[Entity] { entity =>
+        path.write[T].writes(ac.convert(attr).read(entity))
       }
   }
 
