@@ -7,6 +7,8 @@ import play.api.libs.functional.{Monoid, Reducer}
 
 object Implicits {
 
+  private val utf8Charset = java.nio.charset.Charset.forName("UTF-8")
+
   implicit val Keyword2Json = Writes[Keyword] { kw => JsString(kw.toString) }
 
   def writesDatomicDataToDepth(depth: Int): Writes[Any] = {
@@ -35,6 +37,8 @@ object Implicits {
             builder += writesDatomicDataToDepth(depth).writes(a)
           }
           JsArray(builder.result())
+        case arr: Array[Byte] =>
+          JsString(new String(org.apache.commons.codec.binary.Base64.encodeBase64(arr), utf8Charset))
         case _ => throw new RuntimeException(s"Unexpected Datomic data of ${a.getClass}")
       }
     }
