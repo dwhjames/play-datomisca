@@ -25,16 +25,23 @@ import datomisca.{Datomic, Connection}
 
 class DatomicPlugin(app: Application) extends Plugin {
 
-  val conf = DatomicPlugin.parseConf(app)
+  val conf = {
+    val conf0 = app.configuration
+    conf0.getConfig("datomisca.uri") match {
+      case None => conf0
+      case Some(conf1) => conf0 ++ conf1 // conf1 withFallback conf0
+    }
+  }
 
   /** Retrieves URI using ID from configuration.  
     * It crashes with runtime exception if not found 
     */
-  def uri(id: String): String = conf(id)
+  def uri(id: String): String =
+    conf.getString(id) getOrElse { throw new IllegalArgumentException(s"$id not found") }
   /** Retrieves URI from configuration in safe mode.  
     * @return Some(uri) if found and None if not found 
     */
-  def safeUri(id: String): Option[String] = conf.get(id)
+  def safeUri(id: String): Option[String] = conf.getString(id)
 
   /** Creates a Datomic connection (or throws a RuntimeException):
     * - if ID is found in configuration, it retrieves corresponding URI
@@ -42,7 +49,12 @@ class DatomicPlugin(app: Application) extends Plugin {
     * @param id the id to search or an URI
     * @return created Connection (or throws RuntimeException)
     */
-  def connect(id: String): Connection = Datomic.connect(safeUri(id).getOrElse(id))
+  def connect(id: String): Connection = Datomic.connect(
+    if (id startsWith "datomic:")
+      id
+    else
+      uri(id)
+  )
 
   /** Safely creates a Datomic connection :
     * - if ID is found in configuration, it retrieves corresponding URI
@@ -50,27 +62,29 @@ class DatomicPlugin(app: Application) extends Plugin {
     * @param id the id to search or an URI
     * @return a Try[Connection] embedding potential detected exception
     */
-  def safeConnect(id: String): Try[Connection] = Try(connect(safeUri(id).getOrElse(id)))
+  def safeConnect(id: String): Try[Connection] = Try(connect(id))
 
-  override def onStart {
-    Logger.info("DatomicPlugin starting...")
-    Logger.info(
-      "DatomicPlugin successfully started with uris :\n%s".format(
-        conf map { case (k, v) =>
-          assert {
-            v startsWith "datomic:"
+
+  override def onStart: Unit = {
+    import scala.collection.JavaConversions._
+    app.configuration.getObject("datomisca.uri") foreach { obj =>
+        obj.toMap foreach { case (k, v) =>
+          if (v.valueType == com.typesafe.config.ConfigValueType.STRING) {
+            val uriStr = v.unwrapped.toString
+            assert {
+              uriStr startsWith "datomic:"
+            }
+            val uri = new java.net.URI(uriStr drop 8)
+            Logger.info(s"""DatomicPlugin found datomisca.uri config with,
+            |{
+            |  config key:      $k
+            |  storage service: ${uri.getScheme}
+            |  db URI path:     ${uri.getAuthority}${uri.getPath}
+            |}""".stripMargin
+            )
           }
-          val uri = new java.net.URI(v drop 8)
-          s"""|  config key:      $k
-              |  storage service: ${uri.getScheme}
-              |  db URI path:     ${uri.getAuthority}${uri.getPath}""".stripMargin
-        } mkString ("{\n", "\n", "\n}")
-      )
-    )
-  }
-
-  override def onStop {
-    Logger.info("DatomicPlugin stops, closing connections...")
+        }
+    }
   }
 }
 
@@ -84,13 +98,6 @@ object DatomicPlugin {
 
   def connect(id: String)(implicit app: Application): Connection = current.connect(id)
   def safeConnect(id: String)(implicit app: Application): Try[Connection] = current.safeConnect(id)
-  /*val DEFAULT_HOST = "localhost:27017"
-
-  def connection(implicit app :Application) = current.connection
-  def db(implicit app :Application) = current.db
-  def collection(name :String)(implicit app :Application) = current.collection(name)
-  def dbName(implicit app :Application) = current.dbName
-  */
 
   /**
     * returns the current instance of the plugin.
@@ -100,12 +107,5 @@ object DatomicPlugin {
     case _ => throw new PlayException("DatomicPlugin Error", "The DatomicPlugin has not been initialized! Please edit your conf/play.plugins file and add the following line: '400:play.modules.datomic.DatomicPlugin' (400 is an arbitrary priority and may be changed to match your needs).")
   }
 
-  private def parseConf(app: Application): Map[String, String] = {
-    import scala.collection.JavaConversions._
-    app.configuration.getObject("datomisca.uri") match {
-      case Some(obj) => obj.toMap map { case(k, v) => k -> v.unwrapped.toString }
-      case None =>  throw app.configuration.globalError("Missing configuration key 'datomisca.uri' (should be a list of servers)!")
-    }
-  }
 }
 
