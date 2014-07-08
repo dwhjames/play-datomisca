@@ -20,7 +20,8 @@ class DatomicSpec extends Specification {
         additionalConfiguration = 
           com.typesafe.config.ConfigFactory.parseMap(Map(
             "datomisca.uri.mem" -> "datomic:mem://mem",
-            "datomisca.uri.mem2" -> "datomic:mem://mem2"
+            "datomisca.uri.mem2" -> "datomic:mem://mem2",
+            "custom.config.path" -> "datomic:mem://foo"
           ).asJava),
         additionalPlugins = Seq("play.modules.datomisca.DatomicPlugin")
       )){
@@ -29,6 +30,8 @@ class DatomicSpec extends Specification {
         val uri = DatomicPlugin.uri("mem")
         
         uri must beEqualTo("datomic:mem://mem")
+
+        DatomicPlugin.uri("custom.config.path") must beEqualTo("datomic:mem://foo")
         DatomicPlugin.safeUri("memdfds") must beEqualTo(None)
 
         println("creating DB")
@@ -37,6 +40,8 @@ class DatomicSpec extends Specification {
         implicit val conn = DatomicPlugin.connect("mem")
 
         conn must not beNull
+
+        conn must beEqualTo(DatomicPlugin.connect("datomic:mem://mem"))
 
         val person = new Namespace("person") {
           val character = Namespace("person.character")
