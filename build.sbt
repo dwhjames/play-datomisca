@@ -33,10 +33,10 @@ lazy val playDatomisca = project.
   )
 
 lazy val playDatomisca22 = project.
-  in(file("oldplay")).
+  in(file("play-datomisca22")).
   settings(bintray.Plugin.bintraySettings:_*).
   settings(
-    name := "play-datomisca-22",
+    name := "play-datomisca22",
     scalaVersion := "2.10.4",
     pellucidBintrayOrg,
     sourceDirectory in Compile <<= sourceDirectory in (playDatomisca, Compile),
