@@ -16,31 +16,23 @@ resolvers in ThisBuild ++= Seq(
 )
 
 
-val pellucidBintrayOrg = bintray.Keys.bintrayOrganization in (bintray.Keys.bintray) := Some("pellucid")
 
+lazy val datomiscaPlayJson = project in file("datomisca-play-json")
 
-
-lazy val playDatomisca = project.
-  in(file(".")).
-  settings(bintray.Plugin.bintraySettings:_*).
-  settings(
-    name := "play-datomisca",
-    scalaVersion := "2.11.1",
-    crossScalaVersions := Seq("2.10.4", "2.11.1"),
-    pellucidBintrayOrg,
-    libraryDependencies ++= Dependencies.playDatomisca,
-    fork in Test := true
+lazy val datomiscaPlay22Json = (
+  project
+  in file("datomisca-play22-json")
+  settings (
+    sourceDirectory <<= sourceDirectory in datomiscaPlayJson
   )
+)
 
-lazy val playDatomisca22 = project.
-  in(file("play-datomisca22")).
-  settings(bintray.Plugin.bintraySettings:_*).
-  settings(
-    name := "play-datomisca22",
-    scalaVersion := "2.10.4",
-    pellucidBintrayOrg,
-    sourceDirectory in Compile <<= sourceDirectory in (playDatomisca, Compile),
-    sourceDirectory in Test <<= sourceDirectory in (playDatomisca, Test),
-    libraryDependencies ++= Dependencies.playDatomisca22,
-    fork in Test := true
+lazy val datomiscaPlayPlugin = project in file("datomisca-play-plugin")
+
+lazy val datomiscaPlay22Plugin = (
+  project
+  in file("datomisca-play22-plugin")
+  settings (
+    sourceDirectory <<= sourceDirectory in datomiscaPlayPlugin
   )
+)

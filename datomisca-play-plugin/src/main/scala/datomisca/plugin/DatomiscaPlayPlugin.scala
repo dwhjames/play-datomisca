@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Pellucid and Zenexity
+ * Copyright 2012-2014 Pellucid and Zenexity
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package play.modules.datomisca
+package datomisca
+package plugin
 
 import scala.util.Try
 
 import play.api.{Application, Logger, PlayException, Plugin}
 
-import datomisca.{Datomic, Connection}
 
-
-class DatomicPlugin(app: Application) extends Plugin {
+class DatomiscaPlayPlugin(app: Application) extends Plugin {
 
   val conf = {
     val conf0 = app.configuration
@@ -75,7 +74,7 @@ class DatomicPlugin(app: Application) extends Plugin {
               uriStr startsWith "datomic:"
             }
             val uri = new java.net.URI(uriStr drop 8)
-            Logger.info(s"""DatomicPlugin found datomisca.uri config with,
+            Logger.info(s"""DatomiscaPlayPlugin found datomisca.uri config with,
             |{
             |  config key:      $k
             |  storage service: ${uri.getScheme}
@@ -91,7 +90,7 @@ class DatomicPlugin(app: Application) extends Plugin {
 /**
  * Datomic access methods.
  */
-object DatomicPlugin {
+object DatomiscaPlayPlugin {
 
   def uri(id: String)(implicit app: Application): String = current.uri(id)
   def safeUri(id: String)(implicit app: Application): Option[String] = current.safeUri(id)
@@ -102,9 +101,9 @@ object DatomicPlugin {
   /**
     * returns the current instance of the plugin.
     */
-  def current(implicit app: Application): DatomicPlugin = app.plugin[DatomicPlugin] match {
+  def current(implicit app: Application): DatomiscaPlayPlugin = app.plugin[DatomiscaPlayPlugin] match {
     case Some(plugin) => plugin
-    case _ => throw new PlayException("DatomicPlugin Error", "The DatomicPlugin has not been initialized! Please edit your conf/play.plugins file and add the following line: '400:play.modules.datomic.DatomicPlugin' (400 is an arbitrary priority and may be changed to match your needs).")
+    case _ => throw new PlayException("DatomiscaPlayPlugin Error", "The DatomiscaPlayPlugin has not been initialized! Please edit your conf/play.plugins file and add the following line: '400:datomisca.plugin.DatomiscaPlayPlugin' (400 is an arbitrary priority and may be changed to match your needs).")
   }
 
 }

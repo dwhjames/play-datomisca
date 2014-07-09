@@ -3,8 +3,8 @@ import org.specs2.mutable._
 import play.api.test._
 import play.api.test.Helpers._
 
-import play.modules.datomisca._
 import datomisca._
+import datomisca.plugin.DatomiscaPlayPlugin
 
 import scala.language.reflectiveCalls
 import scala.concurrent._
@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 
 
 class DatomicSpec extends Specification {
-  "DatomicPlugin" should {
+  "DatomiscaPlayPlugin" should {
     "read conf" in {
       import scala.collection.JavaConverters._
 
@@ -23,25 +23,25 @@ class DatomicSpec extends Specification {
             "datomisca.uri.mem2" -> "datomic:mem://mem2",
             "custom.config.path" -> "datomic:mem://foo"
           ).asJava),
-        additionalPlugins = Seq("play.modules.datomisca.DatomicPlugin")
+        additionalPlugins = Seq("datomisca.plugin.DatomiscaPlayPlugin")
       )){
         import play.api.Play.current
 
-        val uri = DatomicPlugin.uri("mem")
+        val uri = DatomiscaPlayPlugin.uri("mem")
         
         uri must beEqualTo("datomic:mem://mem")
 
-        DatomicPlugin.uri("custom.config.path") must beEqualTo("datomic:mem://foo")
-        DatomicPlugin.safeUri("memdfds") must beEqualTo(None)
+        DatomiscaPlayPlugin.uri("custom.config.path") must beEqualTo("datomic:mem://foo")
+        DatomiscaPlayPlugin.safeUri("memdfds") must beEqualTo(None)
 
         println("creating DB")
         Datomic.createDatabase(uri) must beEqualTo(true)
         
-        implicit val conn = DatomicPlugin.connect("mem")
+        implicit val conn = DatomiscaPlayPlugin.connect("mem")
 
         conn must not beNull
 
-        conn must beEqualTo(DatomicPlugin.connect("datomic:mem://mem"))
+        conn must beEqualTo(DatomiscaPlayPlugin.connect("datomic:mem://mem"))
 
         val person = new Namespace("person") {
           val character = Namespace("person.character")
