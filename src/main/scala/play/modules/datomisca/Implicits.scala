@@ -4,12 +4,25 @@ import datomisca._
 
 import play.api.libs.json._
 import play.api.libs.functional.{Monoid, Reducer}
+import play.api.data.validation.ValidationError
 
 object Implicits {
 
-  private val utf8Charset = java.nio.charset.Charset.forName("UTF-8")
+  implicit val formatKeyword = Format[Keyword](
+      Reads[Keyword]{
+        case JsString(kwStr) =>
+          if (kwStr.length < 2)
+            JsError(Seq(JsPath() -> Seq(ValidationError("error.expected.nonempty"))))
+          else if (kwStr.charAt(0) != ':')
+            JsError(Seq(JsPath() -> Seq(ValidationError("error.expected.clojurekeyword"))))
+          else
+            JsSuccess(clojure.lang.Keyword.intern(kwStr.substring(1)))
+        case _ => JsError(Seq(JsPath() -> Seq(ValidationError("error.expected.jsstring"))))
+      },
+      Writes[Keyword](kw => JsString(kw.toString))
+    )
 
-  implicit val Keyword2Json = Writes[Keyword] { kw => JsString(kw.toString) }
+  private val utf8Charset = java.nio.charset.Charset.forName("UTF-8")
 
   def writesDatomicDataToDepth(depth: Int): Writes[Any] = {
     require(depth >= 0)
