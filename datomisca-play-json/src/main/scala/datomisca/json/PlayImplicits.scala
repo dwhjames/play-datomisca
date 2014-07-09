@@ -22,10 +22,19 @@ import play.api.libs.functional.{Monoid, Reducer}
 import play.api.data.validation.ValidationError
 
 
-object PlayImplicits {
+object PlayImplicits extends AbstractPlayImplicits {
 
-  implicit val formatKeyword = Format[Keyword](
-      Reads[Keyword]{
+  implicit object writesKeyword extends Writes[Keyword] {
+    def writes(kw: Keyword) = JsString(kw.toString)
+  }
+}
+
+abstract class AbstractPlayImplicits {
+
+  protected def writesKeyword: Writes[Keyword]
+
+  implicit object readsKeyword extends Reads[Keyword] {
+    def reads(json: JsValue) = json match {
         case JsString(kwStr) =>
           if (kwStr.length < 2)
             JsError(Seq(JsPath() -> Seq(ValidationError("error.expected.nonempty"))))
@@ -34,9 +43,8 @@ object PlayImplicits {
           else
             JsSuccess(clojure.lang.Keyword.intern(kwStr.substring(1)))
         case _ => JsError(Seq(JsPath() -> Seq(ValidationError("error.expected.jsstring"))))
-      },
-      Writes[Keyword](kw => JsString(kw.toString))
-    )
+      }
+  }
 
   private val utf8Charset = java.nio.charset.Charset.forName("UTF-8")
 
@@ -54,7 +62,7 @@ object PlayImplicits {
         case d: java.util.Date => Writes.DefaultDateWrites.writes(d)
         case u: java.util.UUID => JsString(u.toString)
         case u: java.net.URI   => JsString(u.toString)
-        case k: Keyword        => JsString(k.toString)
+        case k: Keyword        => writesKeyword.writes(k)
         case e: Entity         =>
           if (depth == 0)
             JsNumber(e.id)
