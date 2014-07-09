@@ -22,6 +22,8 @@ object Implicits {
       Writes[Keyword](kw => JsString(kw.toString))
     )
 
+  private val utf8Charset = java.nio.charset.Charset.forName("UTF-8")
+
   def writesDatomicDataToDepth(depth: Int): Writes[Any] = {
     require(depth >= 0)
     new Writes[Any] {
@@ -48,6 +50,8 @@ object Implicits {
             builder += writesDatomicDataToDepth(depth).writes(a)
           }
           JsArray(builder.result())
+        case arr: Array[Byte] =>
+          JsString(new String(org.apache.commons.codec.binary.Base64.encodeBase64(arr), utf8Charset))
         case _ => throw new RuntimeException(s"Unexpected Datomic data of ${a.getClass}")
       }
     }
@@ -118,6 +122,7 @@ object Implicits {
       }
   }
 
+  @deprecated("use writeFact", "0.7")
   def writeAttr[T] = new WriteAttrHelper[T]
 
   class WriteAttrHelper[T] {
@@ -126,6 +131,17 @@ object Implicits {
              (implicit ac: Attribute2EntityReaderCast[DD, Card, T], jsWrites: Writes[T]) =
       Writes[Entity] { entity =>
         jsWrites.writes(ac.convert(attr).read(entity))
+      }
+  }
+
+  def writeFact[T] = new WriteFactHelper[T]
+
+  class WriteFactHelper[T] {
+    def apply[DD <: AnyRef, Card <: Cardinality]
+             (path: JsPath, attr: Attribute[DD, Card])
+             (implicit ac: Attribute2EntityReaderCast[DD, Card, T], jsWrites: Writes[T]) =
+      OWrites[Entity] { entity =>
+        path.write[T].writes(ac.convert(attr).read(entity))
       }
   }
 
