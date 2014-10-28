@@ -1,4 +1,6 @@
 
+import datomisca.plugin.DatomiscaPlayPlugin
+
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
@@ -7,13 +9,12 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import datomisca._
-import play.modules.datomisca._
 
 
 object Global extends GlobalSettings {
 
   override def onStart(app: Application){
-    val uri = DatomicPlugin.uri("mem")
+    val uri = DatomiscaPlayPlugin.uri("mem")
         
     play.Logger.info("created DB:" + Datomic.createDatabase(uri))
 
@@ -48,7 +49,7 @@ object Global extends GlobalSettings {
   }
 
   override def onStop(app: Application){
-    val uri = DatomicPlugin.uri("mem")
+    val uri = DatomiscaPlayPlugin.uri("mem")
 
     play.Logger.info("deleted DB:" + Datomic.deleteDatabase(uri))
   }

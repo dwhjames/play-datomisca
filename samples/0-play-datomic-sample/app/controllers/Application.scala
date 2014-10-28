@@ -1,16 +1,18 @@
 package controllers
 
-import play.api.Play.current
-import play.api.mvc.{Action, Controller}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import datomisca._
-import play.modules.datomisca._
+import datomisca.plugin.DatomiscaPlayPlugin
+import play.api.Play.current
+import play.api.mvc.{Action, Controller}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Application extends Controller {
+
   def index = Action.async {
-    val uri = DatomicPlugin.uri("mem")
+
+    val uri = DatomiscaPlayPlugin.uri("mem")
     implicit val conn = Datomic.connect(uri)
 
     val person = new Namespace("person") {
@@ -41,7 +43,7 @@ object Application extends Controller {
       ]
       """)
 
-      Datomic.q(query, conn.database, DLong(45L))
+      Datomic.q(query, conn.database, 45L)
     } map { l =>
       Ok(l.toString)
     }
