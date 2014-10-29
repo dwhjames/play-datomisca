@@ -1,20 +1,18 @@
+import datomisca.plugin.DatomiscaPlayPlugin
+import datomisca._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.{Application, GlobalSettings}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.io.Source
-
-import play.api.{Application, GlobalSettings}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
-import datomisca._
-import play.modules.datomisca._
 
 
 object Global extends GlobalSettings {
   import play.api.Play.current
 
   override def onStart(app: Application){
-    val uri = DatomicPlugin.uri("seattle")
+    val uri = DatomiscaPlayPlugin.uri("seattle")
 
     play.Logger.info("created DB:" + Datomic.createDatabase(uri))
 
@@ -47,7 +45,7 @@ object Global extends GlobalSettings {
   }
 
   override def onStop(app: Application){
-    val uri = DatomicPlugin.uri("seattle")
+    val uri = DatomiscaPlayPlugin.uri("seattle")
 
     play.Logger.info("deleted DB:" + Datomic.deleteDatabase(uri))
   }
