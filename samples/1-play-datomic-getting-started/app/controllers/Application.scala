@@ -461,7 +461,7 @@ object Application extends Controller {
     val nbSch = Datomic.q(query2, database.asOf(schema_tx_date)).size
     val nbData = Datomic.q(query2, database.asOf(data_tx_date)).size
 
-    val dataContent = Source.fromInputStream(current.resourceAsStream("seattle-data1.dtm").get).mkString
+    val dataContent = Source.fromInputStream(current.resourceAsStream("seattle-data1.edn").get).mkString
     val data = Datomic.parseOps(dataContent)
 
     data.map { data =>
