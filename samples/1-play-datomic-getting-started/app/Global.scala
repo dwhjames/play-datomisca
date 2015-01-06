@@ -16,7 +16,7 @@ object Global extends GlobalSettings {
 
     play.Logger.info("created DB:" + Datomic.createDatabase(uri))
 
-    val schemaIs = current.resourceAsStream("seattle-schema.dtm").get
+    val schemaIs = current.resourceAsStream("seattle-schema.edn").get
     //val schemaContent = Source.fromInputStream(schemaIs).getLines.reduceLeft(_ + _)
     val schemaContent = Source.fromInputStream(schemaIs).mkString
     val schema = Datomic.parseOps(schemaContent)
@@ -27,7 +27,7 @@ object Global extends GlobalSettings {
       val fut = Datomic.transact(schema) flatMap { tx =>
         play.Logger.info("bootstrapped schema")
 
-        val dataIs = current.resourceAsStream("seattle-data0.dtm").get
+        val dataIs = current.resourceAsStream("seattle-data0.edn").get
 
         val dataContent = Source.fromInputStream(dataIs).mkString
         val data = Datomic.parseOps(dataContent)

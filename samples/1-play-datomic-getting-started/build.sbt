@@ -12,8 +12,9 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.datomic" % "datomic-free" % "0.9.4766.16",
-  "com.pellucid" %% "datomisca-play-plugin" % "0.7-alpha-4"
+  "com.datomic" % "datomic-free" % "0.9.5078",
+  "com.pellucid" %% "datomisca-play-plugin" % "0.7-alpha-4",
+  "com.pellucid" %% "datomisca" % "0.7-alpha-11"
 )
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
