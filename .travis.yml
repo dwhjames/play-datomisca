@@ -11,4 +11,5 @@ cache:
     - $HOME/.ivy2/cache
 script:
 - sbt ++$TRAVIS_SCALA_VERSION --warn datomiscaPlayJson/update datomiscaPlayJson/compile
-- sbt ++$TRAVIS_SCALA_VERSION --warn datomiscaPlayPlugin/update datomiscaPlayPlugin/compile datomiscaPlayPlugin/test
+- sbt ++$TRAVIS_SCALA_VERSION --warn datomiscaPlayPlugin/update datomiscaPlayPlugin/compile datomiscaPlayPlugin/test:compile
+- sbt ++$TRAVIS_SCALA_VERSION datomiscaPlayPlugin/test

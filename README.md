@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dwhjames/play-datomisca.svg?branch=master)](https://travis-ci.org/dwhjames/play-datomisca)
+
 # [Play Datomisca](http://dwhjames.github.com/datomisca), Play! Framework 2.3 module for [Datomic](http://www.datomic.com)
 
 [Datomisca](http://dwhjames.github.com/datomisca) is a Scala driver for [Datomic](http://www.datomic.com)
