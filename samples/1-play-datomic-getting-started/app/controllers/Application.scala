@@ -9,8 +9,8 @@ import play.api.mvc.{Action, Controller}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 
+import datomisca.plugin.DatomiscaPlayPlugin
 import datomisca._
-import play.modules.datomisca._
 
 
 object Application extends Controller {
@@ -19,7 +19,7 @@ object Application extends Controller {
     val tpe = new Namespace("community.type")
   }
 
-  val uri = DatomicPlugin.uri("seattle")
+  val uri = DatomiscaPlayPlugin.uri("seattle")
   implicit val conn = Datomic.connect(uri)
 
   def countCommunities = Action {
@@ -41,7 +41,7 @@ object Application extends Controller {
 
     try {
       Datomic.q(query, database).headOption map {
-        case eid: DLong =>
+        case eid: Long =>
           val e = database.entity(eid)
           Ok(Json.toJson(e.toMap map { case (k, v) => k.toString -> v.toString }))
       } getOrElse {
@@ -61,7 +61,7 @@ object Application extends Controller {
 
     try {
       val l = Datomic.q(query, database) map {
-        case eid: DLong =>
+        case eid: Long =>
           val entity = database.entity(eid)
           val name = entity.as[String](community / "name")
           name
@@ -81,9 +81,9 @@ object Application extends Controller {
 
     try {
       val l = Datomic.q(query, database) map {
-        case eid: DLong =>
+        case eid: Long =>
           val entity = database.entity(eid)
-          val neighborhood = entity(community / "neighborhood").as[DEntity]
+          val neighborhood = entity.as[Entity](community / "neighborhood")
           neighborhood.toMap map { case (k, v) => k.toString -> v.toString }
       }
       Ok(Json.toJson(l))
@@ -101,11 +101,11 @@ object Application extends Controller {
 
     try {
       Datomic.q(query, database).headOption map {
-        case eid: DLong =>
+        case eid: Long =>
           val entity = database.entity(eid)
-          val neighborhood = entity(community / "neighborhood").as[DEntity]
-          val communities = neighborhood(community / "_neighborhood").as[Set[DEntity]]
-          val names = communities map { comm => comm(community / "name").as[String] }
+          val neighborhood = entity.as[Entity](community / "neighborhood")
+          val communities = neighborhood.as[Set[Entity]](community / "_neighborhood")
+          val names = communities map { comm => comm.as[String](community / "name") }
           Ok(Json.toJson(names))
       } getOrElse {
         NotFound("no community found")
@@ -123,7 +123,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (eid: DLong, name: DString) => name.as[String]
+        case (eid: Long, name: String) => name
       }
     ))
   }
@@ -136,7 +136,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (name: DString, url: DString) => Json.obj("name" -> name.as[String], "url" -> url.as[String])
+        case (name: String, url: String) => Json.obj("name" -> name, "url" -> url)
       }
     ))
   }
@@ -149,7 +149,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (e: DLong, c: DString) => Json.obj("id" -> e.as[Long], "url" -> c.as[String])
+        case (e: Long, c: String) => Json.obj("id" -> e, "url" -> c)
       }
     ))
   }
@@ -162,7 +162,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (e: DString) => e.as[String]
+        case (e: String) => e
       }
     ))
   }
@@ -180,7 +180,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (e: DString) => e.as[String]
+        case (e: String) => e
       }
     ))
   }
@@ -198,7 +198,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       Datomic.q(query, database) map {
-        case (cname: DString, rname: DRef) => Json.obj(cname.as[String] -> rname.toString)
+        case (cname: String, rname: Keyword) => Json.obj(cname -> rname.toString)
       }
     ))
   }
@@ -214,11 +214,11 @@ object Application extends Controller {
       ]
     """)
 
-    val res1 = Datomic.q(query, database, DRef(community.tpe / "twitter"))
-    val res2 = Datomic.q(query, database, DRef(community.tpe / "facebook-page"))
+    val res1 = Datomic.q(query, database, (community.tpe / "twitter"))
+    val res2 = Datomic.q(query, database, (community.tpe / "facebook-page"))
     Ok(Json.toJson(
       (res1 ++ res2) map {
-        case (name: DString) => name.as[String]
+        case (name: String) => name
       }
     ))
   }
@@ -238,9 +238,9 @@ object Application extends Controller {
       Datomic.q(
         query,
         database,
-        Datomic.coll(":community.type/facebook-page", ":community.type/twitter")
+        Seq(":community.type/facebook-page", ":community.type/twitter")
       ) map {
-          case (cname: DString, tpe: DString) => Json.obj(cname.as[String] -> tpe.as[String])
+          case (cname: String, tpe: String) => Json.obj(cname -> tpe)
       }
     ))
   }
@@ -259,15 +259,15 @@ object Application extends Controller {
 
     val results = Datomic.q(
       query, database,
-      Datomic.coll(
-        Datomic.coll(":community.type/email-list", ":community.orgtype/community"),
-        Datomic.coll(":community.type/website", ":community.orgtype/commercial")
+      Seq(
+        Seq(":community.type/email-list", ":community.orgtype/community"),
+        Seq(":community.type/website", ":community.orgtype/commercial")
       )
     )
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString, tpe: DString, orgType: DString) => Json.arr(cname.as[String], tpe.as[String], orgType.as[String])
+        case (cname: String, tpe: String, orgType: String) => Json.arr(cname, tpe, orgType)
       }
     ))
   }
@@ -286,7 +286,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString) => Json.obj("community" -> cname.as[String])
+        case (cname: String) => Json.obj("community" -> cname)
       }
     ))
   }
@@ -304,7 +304,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString) => Json.obj("community" -> cname.as[String])
+        case (cname: String) => Json.obj("community" -> cname)
       }
     ))
   }
@@ -321,11 +321,11 @@ object Application extends Controller {
       ]
     """)
 
-    val results = Datomic.q(query, database, DString(":community.type/website"), DString("food"))
+    val results = Datomic.q(query, database, ":community.type/website", "food")
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString, cat: DString) => Json.obj(cname.as[String] -> cat.as[String])
+        case (cname: String, cat: String) => Json.obj(cname -> cat)
       }
     ))
   }
@@ -351,7 +351,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString) => Json.obj("community" -> cname.as[String])
+        case (cname: String) => Json.obj("community" -> cname)
       }
     ))
   }
@@ -390,7 +390,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       (results ++  results2) map {
-        case (cname: DString) => Json.obj("community" -> cname.as[String])
+        case (cname: String) => Json.obj("community" -> cname)
       }
     ))
   }
@@ -437,7 +437,7 @@ object Application extends Controller {
 
     Ok(Json.toJson(
       results map {
-        case (cname: DString) => Json.obj("community" -> cname.as[String])
+        case (cname: String) => Json.obj("community" -> cname)
       }
     ))
   }
@@ -450,7 +450,7 @@ object Application extends Controller {
 
     val results = Datomic.q(query, database)
 
-    val sorted = results.map( dd => dd.asInstanceOf[DInstant]).toSeq.sortWith( (_1: DInstant, _2: DInstant) => _1.as[java.util.Date].after(_2.as[java.util.Date]) )
+    val sorted = results.map( dd => dd.asInstanceOf[java.util.Date]).toSeq.sortWith( (_1: java.util.Date, _2: java.util.Date) => _1.after(_2) )
     val data_tx_date = sorted(0)
     val schema_tx_date = sorted(1)
 
@@ -461,7 +461,7 @@ object Application extends Controller {
     val nbSch = Datomic.q(query2, database.asOf(schema_tx_date)).size
     val nbData = Datomic.q(query2, database.asOf(data_tx_date)).size
 
-    val dataContent = Source.fromInputStream(current.resourceAsStream("seattle-data1.dtm").get).mkString
+    val dataContent = Source.fromInputStream(current.resourceAsStream("seattle-data1.edn").get).mkString
     val data = Datomic.parseOps(dataContent)
 
     data.map { data =>
@@ -474,8 +474,8 @@ object Application extends Controller {
 
         Ok(Json.toJson(
           Json.obj(
-            "data"              -> data_tx_date.as[Long],
-            "schema"            -> schema_tx_date.as[Long],
+            "data"              -> data_tx_date.getTime,
+            "schema"            -> schema_tx_date.getTime,
             "nb_schema"         -> nbSch,
             "nb_data"           -> nbData,
             "nb_after_with"     -> nbWithAfter,
@@ -490,20 +490,22 @@ object Application extends Controller {
     }
   }
 
-  def makeNewPartition = Action.async {
-    val newPartition = Entity.add(DId(Partition.DB))(
-      Namespace.DB / "ident" -> ":communities",
-      Namespace.DB.INSTALL / "_partition" -> "db.part/db"
-    )
 
-    Datomic.transact(newPartition) map { tx =>
+  private val communitiesPartition = new Partition(Namespace.DB.PART / "communities")
+
+  def makeNewPartition = Action.async {
+
+    val partitionTx: TxData = Fact.partition(communitiesPartition)
+
+    Datomic.transact(partitionTx) map { tx =>
+
       Ok(Json.obj("tx" -> tx.toString))
     }
   }
 
   def makeNewComm = Action.async {
-    val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
-      Namespace("community") / "name" -> "Easton"
+    val newComm = Entity.add(DId(communitiesPartition))(
+      community / "name" -> "Easton"
     )
 
     Datomic.transact(newComm) map { tx =>
@@ -517,9 +519,9 @@ object Application extends Controller {
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
-    val id = Datomic.q(query, database).head.asInstanceOf[DLong]
+    val id = Datomic.q(query, database).head.asInstanceOf[Long]
 
-    val op = Fact.add(DId(id))( Namespace("community") / "category" -> "free stuff" )
+    val op = Fact.add(DId(id))( community / "category" -> "free stuff" )
     Datomic.transact(op) map { tx =>
       Ok(Json.obj("tx" -> tx.toString))
     }
@@ -532,7 +534,7 @@ object Application extends Controller {
       [:find ?id :where [?id :community/name "belltown"]]
     """)
 
-    val id = Datomic.q(query, database).head.asInstanceOf[DLong]
+    val id = Datomic.q(query, database).head.asInstanceOf[Long]
 
     val op = Entity.retract(id)
     Datomic.transact(op) map { tx =>
@@ -542,8 +544,8 @@ object Application extends Controller {
   }
 
   def transReport = Action.async {
-    val newComm = Entity.add(DId(Partition(Keyword("communities"))))(
-      Namespace("community") / "name" -> "Easton"
+    val newComm = Entity.add(DId(communitiesPartition))(
+      community / "name" -> "Easton"
     )
 
     //Await.result(Datomic.transact(newComm), Duration("2 seconds"))
@@ -567,7 +569,7 @@ object Application extends Controller {
           """)
 
           Ok {
-            Datomic.q(query, report.dbAfter, DColl(report.txData)).map{
+            Datomic.q(query, report.dbAfter, report.txData).map{
               case (e, aname, v, added) =>
                 Json.arr(e.toString, aname.toString, v.toString, added.toString)
             }.foldLeft(Json.arr())( (acc, e) => acc :+ e)
