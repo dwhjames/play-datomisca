@@ -1,9 +1,9 @@
 
-organization in ThisBuild := "com.pellucid"
+organization in ThisBuild := "com.github.dwhjames"
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-version in ThisBuild := "0.7-alpha-4"
+version in ThisBuild := "0.7-RC1"
 
 
 
@@ -11,8 +11,9 @@ scalacOptions in ThisBuild ++= Seq("-deprecation", "-feature", "-unchecked")
 
 
 resolvers in ThisBuild ++= Seq(
-  "Typesafe repository releases" at "http://repo.typesafe.com/typesafe/releases/",
-  "Pellucid Bintray" at "http://dl.bintray.com/content/pellucid/maven"
+  Resolver.typesafeRepo("releases"),
+  Resolver.bintrayRepo("dwhjames", "maven"),
+  "clojars" at "https://clojars.org/repo"
 )
 
 

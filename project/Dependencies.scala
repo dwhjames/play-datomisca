@@ -4,10 +4,10 @@ object Dependencies {
 
   object V {
     // compile
-    val datomic      = "0.9.4766.16"
-    val datomisca    = "0.7-alpha-11"
-    val play23       = "2.3.1"
-    val play22       = "2.2.3"
+    val datomic      = "0.9.5130"
+    val datomisca    = "0.7-RC1"
+    val play23       = "2.3.7"
+    val play22       = "2.2.6"
 
     // test
     val specs2    = "2.3.12"
@@ -15,7 +15,7 @@ object Dependencies {
 
   object Compile {
     val datomic      = "com.datomic"       %  "datomic-free"    % V.datomic    % "provided" exclude("org.slf4j", "slf4j-nop") exclude("org.jboss.netty", "netty")
-    val datomisca    = "com.pellucid"      %% "datomisca"       % V.datomisca
+    val datomisca    = "com.github.dwhjames" %% "datomisca"       % V.datomisca
     val play23       = "com.typesafe.play" %% "play"            % V.play23
     val play22       = "com.typesafe.play" %% "play"            % V.play22
   }
