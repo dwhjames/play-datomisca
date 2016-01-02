@@ -1,4 +1,4 @@
-name := "play-datomisca-sample"
+name := "play-datomisca-person-dog-typed"
 
 version := "1.0-SNAPSHOT"
 

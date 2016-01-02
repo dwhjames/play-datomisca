@@ -3,7 +3,7 @@ organization in ThisBuild := "com.github.dwhjames"
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-version in ThisBuild := "0.7-RC1"
+version in ThisBuild := "0.7.0"
 
 
 
@@ -28,7 +28,7 @@ lazy val datomiscaPlay22Json = (
   )
 )
 
-lazy val datomiscaPlayPlugin = project in file("datomisca-play-plugin")
+lazy val datomiscaPlayPlugin = (project in file("datomisca-play-plugin")).enablePlugins(PlayScala).enablePlugins(SbtWeb)
 
 lazy val datomiscaPlay22Plugin = (
   project

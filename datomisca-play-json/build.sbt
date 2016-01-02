@@ -1,16 +1,16 @@
 
 name := "datomisca-play-json"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.7"
 
-crossScalaVersions := Seq("2.10.4", "2.11.5")
+crossScalaVersions := Seq("2.10.4", "2.11.7")
 
 libraryDependencies ++= {
   import Dependencies.Compile._
   Seq(
     datomic,
     datomisca,
-    play23
+    play24
   )
 }
 

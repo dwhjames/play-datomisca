@@ -9,7 +9,7 @@ import Datomic._
 object Common {
   // the partition in which I'll store data
   // USER is not advised apparenty in PROD
-  val MY_PART = Partition(Keyword("my_part"))
+  val MY_PART = new Partition(Namespace("db.part") / "my_part")
 }
 
 object Dog {

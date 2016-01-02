@@ -20,7 +20,7 @@ object Application extends Controller {
   }
 
   val uri = DatomiscaPlayPlugin.uri("seattle")
-  implicit val conn = Datomic.connect(uri)
+  implicit val conn: Connection = Datomic.connect(uri)
 
   def countCommunities = Action {
     val query = Query("""
@@ -549,12 +549,12 @@ object Application extends Controller {
     )
 
     //Await.result(Datomic.transact(newComm), Duration("2 seconds"))
-    val txReportQueue = conn.txReportQueue
+    val txReportQueue:TxReportQueue = conn.txReportQueue
 
     Datomic.transact(newComm) map { tx =>
       play.Logger.info("hello")
       //val report = conn.connection.txReportQueue.poll()
-      txReportQueue.stream.head match {
+      txReportQueue.iterator().toSeq.headOption match {
         case None => BadRequest("Unexpected result")
         case Some(report) =>
           play.Logger.info("hello2")

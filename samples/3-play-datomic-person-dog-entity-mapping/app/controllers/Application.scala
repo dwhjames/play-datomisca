@@ -1,5 +1,7 @@
 package controllers
 
+import datomisca.plugin.DatomiscaPlayPlugin
+
 import scala.concurrent.Future
 import scala.util.{Try, Success, Failure}
 
@@ -10,13 +12,12 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import datomisca._
-import play.modules.datomisca._
 
 import models._
 
 
 object Application extends Controller {
-  val uri = DatomicPlugin.uri("mem")
+  val uri = DatomiscaPlayPlugin.uri("mem")
   implicit val conn = Datomic.connect(uri)
 
   def index = Action {
@@ -53,8 +54,8 @@ object Application extends Controller {
             val person = Person(
               name, 
               age, 
-              IdView(id.underlying)(dog), // a reference to 
-              characters map { ch => DRef( Person.person.characters / ch ) }
+              IdView(id)(dog), // a reference to
+              characters map { ch =>  Person.person.characters / ch  }
             )
             Person.insert(person) map { realid =>
               Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> realid)))
@@ -91,8 +92,8 @@ object Application extends Controller {
             val person = Person(
               name, 
               age, 
-              IdView(did.underlying)(dog), // a reference to 
-              characters map { ch => DRef( Person.person.characters / ch ) }
+              IdView(did)(dog), // a reference to
+              characters map { ch =>  Person.person.characters / ch  }
             )
             Person.update(id, person) map { tx =>
               Ok(Json.toJson(Json.obj("result" -> "OK", "id" -> tx.toString)))

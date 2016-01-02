@@ -17,12 +17,14 @@
 package datomisca
 package plugin
 
-import scala.util.Try
+import javax.inject.Inject
 
 import play.api.{Application, Logger, PlayException, Plugin}
 
+import scala.util.Try
 
-class DatomiscaPlayPlugin(app: Application) extends Plugin {
+
+class DatomiscaPlayPlugin @Inject() (implicit app: play.api.Application) extends Plugin {
 
   val conf = {
     val conf0 = app.configuration
@@ -37,7 +39,8 @@ class DatomiscaPlayPlugin(app: Application) extends Plugin {
     */
   def uri(id: String): String =
     conf.getString(id) getOrElse { throw new IllegalArgumentException(s"$id not found") }
-  /** Retrieves URI from configuration in safe mode.  
+  /** Retrieves URI from configuration in safe mode.  *
+    *
     * @return Some(uri) if found and None if not found 
     */
   def safeUri(id: String): Option[String] = conf.getString(id)
@@ -45,6 +48,7 @@ class DatomiscaPlayPlugin(app: Application) extends Plugin {
   /** Creates a Datomic connection (or throws a RuntimeException):
     * - if ID is found in configuration, it retrieves corresponding URI
     * - if ID is not found, it considers ID is an URI
+    *
     * @param id the id to search or an URI
     * @return created Connection (or throws RuntimeException)
     */
@@ -58,6 +62,7 @@ class DatomiscaPlayPlugin(app: Application) extends Plugin {
   /** Safely creates a Datomic connection :
     * - if ID is found in configuration, it retrieves corresponding URI
     * - if ID is not found, it considers ID is an URI
+    *
     * @param id the id to search or an URI
     * @return a Try[Connection] embedding potential detected exception
     */

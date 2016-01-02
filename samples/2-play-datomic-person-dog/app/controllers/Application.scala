@@ -1,6 +1,8 @@
 package controllers
 
 
+import datomisca.plugin.DatomiscaPlayPlugin
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Try
@@ -12,14 +14,13 @@ import play.api.libs.functional.syntax._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import datomisca._
-import play.modules.datomisca._
 
 import models._
 
 
 object Application extends Controller {
-  val uri = DatomicPlugin.uri("mem")
-  implicit val conn = Datomic.connect(uri)
+  val uri = DatomiscaPlayPlugin.uri("mem")
+  implicit val conn: Connection = Datomic.connect(uri)
 
   def index = Action {
     Ok("Ok")
@@ -71,15 +72,15 @@ object Application extends Controller {
       tupled
     ) map {
       case (name, age, dogName, characters) =>
-        Datomic.q(queryDogByName, conn.database, DString(dogName)).headOption map {
-          case dogId: DLong =>
+        Datomic.q(queryDogByName, conn.database, dogName).headOption map {
+          case dogId: Long =>
             val personId = DId(Common.MY_PART)
             Datomic.transact(
               Entity.add(personId)(
                 Person.person / "name"       -> name,
                 Person.person / "age"        -> age,
-                Person.person / "dog"        -> DRef(DId(dogId)),
-                Person.person / "characters" -> (characters map { ch => DRef( Person.person.characters / ch ) })
+                Person.person / "dog"        -> DId(dogId),
+                Person.person / "characters" -> (characters map { ch =>  Person.person.characters / ch  })
               )
             ) map { tx =>
               val realId = tx.resolve(personId)
@@ -97,14 +98,14 @@ object Application extends Controller {
   def getPerson(id: Long) = Action {
     try {
       val entity = conn.database.entity(id)
-      println("dog:"+ entity(Person.person / "dog").as[DEntity].toMap)
-      println("dogName:"+entity.as[DEntity](Person.person / "dog").as[String](Dog.dog / "name"))
-      println("chars:"+entity(Person.person / "characters").as[Set[DKeyword]])
-      val name = entity(Person.person / "name").as[String]
-      val age  = entity(Person.person / "age").as[Long]
-      val dog  = entity(Person.person / "dog").as[DEntity]
-      val dogName = dog(Dog.dog / "name").as[String]
-      val characters = entity(Person.person / "characters").as[Set[DKeyword]].map(_.toString)
+      println("dog:"+ entity.as[Entity](Person.person / "dog").toMap)
+      println("dogName:"+entity.as[Entity](Person.person / "dog").as[String](Dog.dog / "name"))
+      println("chars:"+entity.as[Set[Keyword]](Person.person / "characters"))
+      val name = entity.as[String](Person.person / "name")
+      val age  = entity.as[Long](Person.person / "age")
+      val dog  = entity.as[Entity](Person.person / "dog")
+      val dogName = dog.as[String](Dog.dog / "name")
+      val characters = entity.as[Set[Keyword]](Person.person / "characters").map(_.toString)
       Ok(Json.obj(
         "result" -> "OK",
         "dog" -> Json.obj(
@@ -133,16 +134,16 @@ object Application extends Controller {
     ) map {
       case (name: Option[String], age: Option[Long], dogName: Option[String], characters: Option[_]) =>
         val builder = Map.newBuilder[Keyword, DatomicData]
-        name foreach { name => builder += (Person.person / "name" -> DString(name)) }
-        age  foreach { age  => builder += (Person.person / "age"  -> DLong(age)) }
+        name foreach { name => builder += (Person.person / "name" -> name) }
+        age  foreach { age  => builder += (Person.person / "age"  -> age) }
         dogName foreach { dogName =>
-          Datomic.q(queryDogByName, conn.database, DString(dogName)).headOption.foreach{
-            case dogid: DLong => builder += (Person.person / "dog" -> DRef(DId(dogid)))
+          Datomic.q(queryDogByName, conn.database, dogName).headOption.foreach{
+            case dogid: Long => builder += (Person.person / "dog" -> DId(dogid))
             case _ =>
           }
         }
         characters foreach { characters =>
-          builder += (Person.person / "characters" -> Datomic.coll(characters.map( ch => DRef(Person.person.characters / ch)) ))
+          builder += (Person.person / "characters" -> Seq(characters.map( ch => Person.person.characters / ch) ))
         }
 
         Datomic.transact(Entity.add(DId(id), builder.result)) map { tx =>
