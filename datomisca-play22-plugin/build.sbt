@@ -11,7 +11,7 @@ libraryDependencies ++= {
     datomisca,
     play22 % "provided",
     playTest22,
-    specs2
+    specs2Dep
   )
 }
 

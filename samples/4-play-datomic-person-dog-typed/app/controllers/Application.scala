@@ -1,5 +1,6 @@
 package controllers
 
+import datomisca.plugin.DatomiscaPlayPlugin
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
@@ -13,14 +14,11 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import datomisca._
 
-import play.modules.datomisca._
-import play.modules.datomisca.Implicits._
-
 import models._
 
 
 object Application extends Controller {
-  val uri = DatomicPlugin.uri("mem")
+  val uri = DatomiscaPlayPlugin.uri("mem")
   implicit val conn = Datomic.connect(uri)
 
   def index = Action {
@@ -33,13 +31,13 @@ object Application extends Controller {
 
     // inserts dog
     Datomic.transact(
-      SchemaEntity.add(dogId)(Props(
-        Dog.name -> name
-      ))
+      (SchemaEntity.newBuilder
+        += (Dog.name -> name)
+      ) withId DId(dogId)
     ) map { tx =>
       // resolves real ID
       val realid = tx.resolve(dogId)
-      Ok(Json.obj("result" -> "OK", "id" -> realid))        
+      Ok(Json.obj("result" -> "OK", "id" -> realid))
     }
   }
 
@@ -77,7 +75,7 @@ object Application extends Controller {
       val entity = conn.database.entity(id)
       Ok(Json.obj(
         "result" -> "OK",
-        "data"   -> Json.toJson(entity)
+        "data"   -> Json.toJson(entity)(Person.jsonWrites)
       ))
     } catch {
       case _:Throwable =>

@@ -10,7 +10,7 @@ import DatomicMapping._
 object Common {
   // the partition in which I'll store data
   // USER is not advised apparenty in PROD
-  val MY_PART = Partition(Keyword("my_part"))
+  val MY_PART = new Partition(Namespace("db.part") / "my_part")
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,14 +52,14 @@ object Dog {
 
   // not "remove" because nothing is removed in Datomic
   def retract(id: Long)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact(Entity.retract(DLong(id)))
+    Datomic.transact(Entity.retract(id))
   }
 
   def update(id: Long, dog: Dog)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
     Datomic.transact( DatomicMapping.toEntity(DId(id))(dog) )
   }
 
-  def find(name: String)(implicit conn: Connection): Option[(DLong, Dog)] = {
+  def find(name: String)(implicit conn: Connection): Option[(Long, Dog)] = {
     val query = Query("""
       [ 
         :find ?e
@@ -68,8 +68,8 @@ object Dog {
       ]
     """)
 
-    Datomic.q(query, database, DString(name)).headOption map {
-      case eid: DLong =>
+    Datomic.q(query, database, name).headOption map {
+      case eid: Long =>
         val entity = database.entity(eid)
         (eid, DatomicMapping.fromEntity[Dog](entity))
     }
@@ -81,7 +81,7 @@ object Dog {
 
 // Ref is a pure technical class used to indicate that it references another entity (also contains the DId temporary or final)
 // DRef is a direct reference to a pure non-typed Ident (an enumerator in datomic)
-case class Person(name: String, age: Long, dog: IdView[Dog], characters: Set[DRef])
+case class Person(name: String, age: Long, dog: IdView[Dog], characters: Set[Keyword])
 
 object Person {
   import Dog._
@@ -115,14 +115,14 @@ object Person {
     name      .read[String]   and
     age       .read[Long]     and
     dog       .read[IdView[Dog]] and
-    characters.read[Set[DRef]]
+    characters.read[Set[Keyword]]
   )(Person.apply _)
 
   implicit val personWriter = (
     name      .write[String]   and
     age       .write[Long]     and
     dog       .write[IdView[Dog]] and
-    characters.write[Set[DRef]]
+    characters.write[Set[Keyword]]
   )(unlift(Person.unapply))
 
   /** 
@@ -136,7 +136,7 @@ object Person {
 
     Try {
       Datomic.q(query, conn.database).toList map {
-        case e: DLong =>
+        case e: Long =>
           val entity = database.entity(e)
           DatomicMapping.fromEntity[Person](entity)
       }
@@ -161,14 +161,14 @@ object Person {
 
   // not "remove" because nothing is removed in Datomic
   def retract(id: Long)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
-    Datomic.transact(Entity.retract(DLong(id)))
+    Datomic.transact(Entity.retract(id))
   }
 
   def update(id: Long, person: Person)(implicit conn: Connection, ex: ExecutionContext): Future[TxReport] = {
     Datomic.transact( DatomicMapping.toEntity(DId(id))(person) )
   }
 
-  def find(name: String)(implicit conn: Connection): Option[(DLong, Person)] = {
+  def find(name: String)(implicit conn: Connection): Option[(Long, Person)] = {
     val query = Query("""
       [ 
         :find ?e
@@ -177,8 +177,8 @@ object Person {
       ]
     """)
 
-    Datomic.q(query, database, DString(name)).headOption map {
-      case eid: DLong =>
+    Datomic.q(query, database, name).headOption map {
+      case eid: Long =>
         val entity = database.entity(eid)
         (eid, DatomicMapping.fromEntity[Person](entity))
     }
